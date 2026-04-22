@@ -41,7 +41,6 @@ export async function GET(request) {
         return true;
       });
 
-      // TODO: tag filter
     } else if (title) {
       let query = supabase.from('usecases').select('*').ilike('title', `%${title}%`);
       if (categoryId !== null) query = query.eq('category_id', categoryId);
@@ -54,6 +53,31 @@ export async function GET(request) {
       const { data, error } = await query;
       if (error) throw error;
       results = data ?? [];
+    }
+
+    if (tag !== null) {
+      const { data: tagRow, error: tagLookupError } = await supabase
+        .from('tags')
+        .select('id')
+        .eq('slug', tag)
+        .single();
+
+      if (tagLookupError || !tagRow) {
+        return NextResponse.json(
+          { success: true, data: { results: [], total: 0, filters: { q, title, category, tag } } },
+          { status: 200 },
+        );
+      }
+
+      const { data: tagLinks, error: tagLinksError } = await supabase
+        .from('usecase_tags')
+        .select('usecase_id')
+        .eq('tag_id', tagRow.id);
+
+      if (tagLinksError) throw tagLinksError;
+
+      const taggedIds = new Set((tagLinks ?? []).map(({ usecase_id }) => usecase_id));
+      results = results.filter(({ id }) => taggedIds.has(id));
     }
 
     return NextResponse.json(

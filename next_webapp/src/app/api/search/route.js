@@ -29,9 +29,12 @@ export async function GET(request) {
         return true;
       });
 
-      // TODO: title search
       // TODO: category filter
       // TODO: tag filter
+    } else if (title) {
+      const { data, error } = await supabase.from('usecases').select('*').ilike('title', `%${title}%`);
+      if (error) throw error;
+      results = data ?? [];
     } else {
       const { data, error } = await supabase.from('usecases').select('*');
       if (error) throw error;

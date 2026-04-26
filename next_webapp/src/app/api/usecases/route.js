@@ -115,9 +115,16 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page')) || 1);
+    const pageSize = Math.max(1, parseInt(searchParams.get('pageSize')) || 10);
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await supabase
       .from('usecases')
-      .select('*');
+      .select('*', { count: 'exact' })
+      .range(from, to);
 
     if (error) {
       console.error('Supabase error:', error);
@@ -127,9 +134,16 @@ export async function GET(request) {
       );
     }
 
+    const total = count ?? 0;
     return NextResponse.json({
       success: true,
-      data: data || []
+      data: data || [],
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
     });
   } catch (error) {
     console.error('Error fetching use cases:', error);

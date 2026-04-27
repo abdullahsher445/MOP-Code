@@ -119,7 +119,12 @@ export async function GET(request) {
     const tagIds = url.searchParams.get('tag_ids');
     const tagSlug = url.searchParams.get('tag')?.trim();
 
-    let query = supabase.from('usecases').select('*');
+    const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
+    const pageSize = Math.max(1, parseInt(url.searchParams.get('pageSize') ?? '10', 10) || 10);
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase.from('usecases').select('*', { count: 'exact' });
 
     if (keyword) {
       query = query.or(
@@ -173,6 +178,8 @@ export async function GET(request) {
         return NextResponse.json({
           success: true,
           data: [],
+          count: 0,
+          pagination: { page, pageSize, total: 0, totalPages: 0 },
         });
       }
 
@@ -200,13 +207,15 @@ export async function GET(request) {
         return NextResponse.json({
           success: true,
           data: [],
+          count: 0,
+          pagination: { page, pageSize, total: 0, totalPages: 0 },
         });
       }
 
       query = query.in('id', usecaseIds);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query.range(from, to);
 
     if (error) {
       console.error('Supabase error:', error);
@@ -217,9 +226,17 @@ export async function GET(request) {
     }
 
     const total = count ?? 0;
+
     return NextResponse.json({
       success: true,
       data: data || [],
+      count: (data || []).length,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
     });
   } catch (error) {
     console.error('Error fetching use cases:', error);

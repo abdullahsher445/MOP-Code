@@ -73,9 +73,10 @@ function makeChain(result: { data: unknown; error: unknown; count?: number }) {
   chain.neq        = jest.fn().mockReturnValue(chain);
   chain.ilike      = jest.fn().mockReturnValue(chain);
   chain.order      = jest.fn().mockReturnValue(chain);
+  chain.range      = jest.fn().mockResolvedValue(result);
   chain.single     = jest.fn().mockResolvedValue(result);
   chain.maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
-  // For queries that resolve directly (no .single())
+  // For queries that resolve directly (no .single() or .range())
   Object.defineProperty(chain, 'then', {
     get: () => Promise.resolve(result).then.bind(Promise.resolve(result)),
   });
@@ -205,27 +206,21 @@ describe('GET /api/categories', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  test('fetch all categories → 200 success', async () => {
+  test('fetch all categories → 200 with data and pagination metadata', async () => {
     (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
 
     const categories = [MOCK_CATEGORY, { ...MOCK_CATEGORY, id: 2, category_name: 'Health' }];
-
-    (supabase.from as jest.Mock).mockImplementation(() => {
-      const chain: any = {};
-      chain.select = jest.fn().mockReturnValue(chain);
-      chain.order  = jest.fn().mockReturnValue(chain);
-      chain.ilike  = jest.fn().mockReturnValue(chain);
-      // Resolve the query directly
-      chain.then   = undefined;
-      jest.spyOn(chain, 'order').mockResolvedValue({ data: categories, error: null });
-      return chain;
-    });
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: categories, error: null, count: 2 })
+    );
 
     const res = await GET(makeRequest(undefined, ADMIN_HEADERS));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.data).toHaveLength(2);
+    expect(body.pagination).toEqual({ page: 1, pageSize: 10, total: 2, totalPages: 1 });
   });
 
   test('unauthenticated request → 401', async () => {
@@ -241,13 +236,9 @@ describe('GET /api/categories', () => {
   test('fetch with search filter → 200 filtered results', async () => {
     (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
 
-    (supabase.from as jest.Mock).mockImplementation(() => {
-      const chain: any = {};
-      chain.select = jest.fn().mockReturnValue(chain);
-      chain.order  = jest.fn().mockReturnValue(chain);
-      chain.ilike  = jest.fn().mockResolvedValue({ data: [MOCK_CATEGORY], error: null });
-      return chain;
-    });
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: [MOCK_CATEGORY], error: null, count: 1 })
+    );
 
     const res = await GET(makeRequest(
       undefined,
@@ -258,6 +249,92 @@ describe('GET /api/categories', () => {
 
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.data).toHaveLength(1);
+  });
+
+});
+
+// ─── Tests: GET /api/categories - pagination ─────────────────────────────────
+
+describe('GET /api/categories - pagination', () => {
+
+  beforeEach(() => jest.clearAllMocks());
+
+  test('page=2 pageSize=5 → calls range(5, 9) and reflects in metadata', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    const chain = makeChain({ data: [MOCK_CATEGORY], error: null, count: 25 });
+    (supabase.from as jest.Mock).mockReturnValue(chain);
+
+    const res = await GET(makeRequest(
+      undefined,
+      ADMIN_HEADERS,
+      'http://localhost:3000/api/categories?page=2&pageSize=5'
+    ));
+    const body = await res.json();
+
+    expect(chain.range).toHaveBeenCalledWith(5, 9);
+    expect(body.pagination).toEqual({ page: 2, pageSize: 5, total: 25, totalPages: 5 });
+  });
+
+  test('totalPages rounds up correctly (7 items / pageSize=3 → 3 pages)', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: [MOCK_CATEGORY, MOCK_CATEGORY, MOCK_CATEGORY], error: null, count: 7 })
+    );
+
+    const res = await GET(makeRequest(
+      undefined,
+      ADMIN_HEADERS,
+      'http://localhost:3000/api/categories?pageSize=3'
+    ));
+    const body = await res.json();
+
+    expect(body.pagination.totalPages).toBe(3);
+  });
+
+  test('invalid page param falls back to page=1 and calls range(0, 9)', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    const chain = makeChain({ data: [], error: null, count: 0 });
+    (supabase.from as jest.Mock).mockReturnValue(chain);
+
+    const res = await GET(makeRequest(
+      undefined,
+      ADMIN_HEADERS,
+      'http://localhost:3000/api/categories?page=abc'
+    ));
+    const body = await res.json();
+
+    expect(body.pagination.page).toBe(1);
+    expect(chain.range).toHaveBeenCalledWith(0, 9);
+  });
+
+  test('no results → total=0 totalPages=0', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: [], error: null, count: 0 })
+    );
+
+    const res = await GET(makeRequest(undefined, ADMIN_HEADERS));
+    const body = await res.json();
+
+    expect(body.pagination).toEqual({ page: 1, pageSize: 10, total: 0, totalPages: 0 });
+  });
+
+  test('DB error → 500', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: null, error: { message: 'Connection failed' }, count: undefined })
+    );
+
+    await GET(makeRequest(undefined, ADMIN_HEADERS));
+
+    const { errorResponse } = require('../../../app/api/library/errorResponse');
+    expect(errorResponse).toHaveBeenCalledWith('Failed to fetch categories', 500, 'DB_FETCH_ERROR');
   });
 
 });

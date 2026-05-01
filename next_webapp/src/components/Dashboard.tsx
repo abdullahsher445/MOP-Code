@@ -754,17 +754,7 @@ const style = `
 }
 `;
 
-const categories = [
-  { icon: "🏢", label: "EV Infrastructure" },
-  { icon: "🅿️", label: "Parking" },
-  { icon: "🚨", label: "Safety" },
-];
 
-const openPage = (label: string) => {
-  if (label === "EV Infrastructure") {
-    window.location.href = "/en/ev-infrastructure";
-  }
-};
 
 const responsive = {
 	superLargeDesktop: { breakpoint: { max: 4000, min: 3000 }, items: 5 },
@@ -1141,22 +1131,7 @@ const Dashboard = () => {
 							<p>{t("intro")}</p>
 						</div>
 					</section>
-{/* Explore by category  */}
-					<section className="w-full max-w-6xl mx-auto mt-10 px-2 md:px-0">
-            			<h3 className="text-xl font-semibold mb-3">Explore by category</h3>
-              				<div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4 mb-2">
-                  				{categories.map((cat, idx) => (
-                					<div
-                  						key={idx}
-                  						onClick={() => openPage(cat.label)}
-                  						className="rounded-2xl border shadow-sm py-6 flex flex-col items-center bg-white dark:bg-gray-800 hover:shadow-md transition cursor-pointer"
-                					>
-                  						<span className="text-3xl mb-2">{cat.icon}</span>
-                  						<span className="text-sm font-medium text-center">{cat.label}</span>
-                					</div>
-                				))}
-              				</div>
-          			</section>
+
 
 					<section className="case-studies-wrapper">
 						<section className="recent-case-studies">

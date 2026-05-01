@@ -6,8 +6,7 @@ import { useTranslations } from "next-intl";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 
-const CATEGORIES = ["All", "Landmarks", "Environment", "Technology", "Sustainability", "Society"] as const;
-type Category = (typeof CATEGORIES)[number];
+type ImageCategory = "Landmarks" | "Environment" | "Technology" | "Sustainability" | "Society";
 
 const GLOW_COLORS = [
   "#22c55e",
@@ -23,7 +22,7 @@ interface GalleryImage {
   src: string;
   titleKey: string;
   caption: string;
-  category: Exclude<Category, "All">;
+  category: ImageCategory;
   glowColor: string;
 }
 
@@ -205,7 +204,6 @@ const IMAGES: GalleryImage[] = [
 
 export default function GalleryPage() {
   const t = useTranslations("common");
-  const [activeCategory, setActiveCategory] = useState<Category>("All");
   const [lightbox, setLightbox] = useState<GalleryImage | null>(null);
 
   const closeLightbox = useCallback(() => setLightbox(null), []);
@@ -226,10 +224,7 @@ export default function GalleryPage() {
     return () => { document.body.style.overflow = ""; };
   }, [lightbox]);
 
-  const filtered =
-    activeCategory === "All"
-      ? IMAGES
-      : IMAGES.filter((img) => img.category === activeCategory);
+
 
   return (
     <>
@@ -354,36 +349,16 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        {/* ── Category Filter Bar ───────────────────────────────────── */}
-        <div className="sticky top-16 z-30 bg-white/90 dark:bg-[#0f1117]/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 py-3 overflow-x-auto">
-            {/* 2. Filter buttons with shimmer + glow */}
-            <div className="flex gap-2 whitespace-nowrap w-max min-w-full pb-0.5">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`filter-btn px-4 py-1.5 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 ${
-                    activeCategory === cat
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400"
-                  }`}
-                >
-                  {t(`cat_${cat.toLowerCase()}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        
 
         {/* ── Image Grid ────────────────────────────────────────────── */}
         <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-10">
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
-            {t("showing_images", { count: filtered.length })}
+            {t("showing_images", { count: IMAGES.length })}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((img, idx) => (
+            {IMAGES.map((img, idx) => (
               <button
                 key={`${img.src}-${idx}`}
                 onClick={() => setLightbox(img)}
@@ -428,13 +403,6 @@ export default function GalleryPage() {
             ))}
           </div>
 
-          {filtered.length === 0 && (
-            <div className="text-center py-24">
-              <p className="text-gray-400 dark:text-gray-600 text-lg">
-                {t("no_images")}
-              </p>
-            </div>
-          )}
         </main>
 
         <Footer />

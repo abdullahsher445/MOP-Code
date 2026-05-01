@@ -69,11 +69,23 @@ const Footer = () => {
     { name: "Contact Us", path: "/contact" },
   ];
 
-  const socialIcons = [
-    { Icon: FaFacebook, label: "Facebook" },
-    { Icon: FaSquareXTwitter, label: "Twitter/X" },
-    { Icon: FaLinkedin, label: "LinkedIn" },
-  ];
+const socialIcons = [
+  {
+    Icon: FaFacebook,
+    label: "Facebook",
+    href: "https://www.facebook.com/cityofmelbourne",
+  },
+  {
+    Icon: FaSquareXTwitter,
+    label: "Twitter/X",
+    href: "https://x.com/cityofmelb",
+  },
+  {
+    Icon: FaLinkedin,
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/city-of-melbourne",
+  },
+];
 
   return (
     <>
@@ -430,11 +442,18 @@ const Footer = () => {
                   
                 </p>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  {socialIcons.map(({ Icon, label }, i) => (
-                    <button key={i} aria-label={label} className="social-btn">
+                  {socialIcons.map(({ Icon, label, href }, i) => (
+                    <a
+                      key={i}
+                      href={href}
+                      aria-label={label}
+                      className="social-btn"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >
                       <Icon size={18} style={{ position: 'relative', zIndex: 1 }} />
                       <span className="shimmer-sweep" aria-hidden="true" />
-                    </button>
+                    </a>
                   ))}
                 </div>
               </div>

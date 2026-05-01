@@ -665,11 +665,6 @@ const style = `
 .dark .recent-case-studies {
   color: white;
 }
-.recent-case-studies h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
-}
 .recent-case-studies p {
   font-size: 1rem;
   margin-bottom: 3rem;
@@ -759,6 +754,13 @@ const categories = [
   { icon: "🅿️", label: "Parking" },
   { icon: "🚨", label: "Safety" },
 ];
+
+const recentUseCaseTags: Record<string, string[]> = {
+  biotechnology: ["Health", "Innovation", "Research"],
+  "oil-supply-management": ["Energy", "Forecasting", "Industry"],
+  "gas-supply-management": ["Utilities", "Real-time", "Sustainability"],
+  education: ["Education", "Data", "Community"],
+};
 
 const openPage = (label: string) => {
   if (label === "EV Infrastructure") {
@@ -1160,7 +1162,9 @@ const Dashboard = () => {
 
 					<section className="case-studies-wrapper">
 						<section className="recent-case-studies">
-							<h2>{t("Recent Case Studies")}</h2>
+							<h2 className="text-3xl md:text-4xl font-bold mb-2">
+								Recent Use Cases
+							</h2>
 							<p>{t("p2")}</p>
 						</section>
 
@@ -1169,32 +1173,39 @@ const Dashboard = () => {
               {recentCaseStudies.map((item) => (
                   <div
                   key={item.id}
-                  className="bg-gray-50 dark:bg-[#37474F] rounded-2xl shadow-md hover:shadow-lg transition p-4 flex flex-col group cursor-pointer"
+                  className="bg-white dark:bg-[#2f4048] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition flex flex-col group overflow-hidden"
                   >
-                  {/* image */}
                   <img
                       src={item.image}
                       alt={item.title}
-                      className="rounded-xl mb-4 w-full h-40 object-cover group-hover:scale-[1.02] transition-transform"
+                      className="w-full h-40 object-cover group-hover:scale-[1.02] transition-transform"
                   />
+                  <div className="p-5 flex flex-col flex-grow">
+                    <h3 className="text-lg font-semibold mb-2 text-left">
+                        {item.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm text-left flex-grow line-clamp-2">
+                        {item.description}
+                    </p>
 
-                  {/* Title */}
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                      {item.title}
-                  </h3>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {(recentUseCaseTags[item.id] ?? ["Open Data", "Use Case"]).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="rounded-full border border-gray-200 dark:border-gray-600 px-3 py-1 text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#4b5e67]"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
 
-                  {/* Description */}
-                  <p className="text-gray-600 dark:text-gray-300 text-sm text-center flex-grow">
-                      {item.description}
-                  </p>
-
-                  {/* Button */}
-                  <button
+                    <button
                       onClick={() => router.push(`/recent/${item.id}`)}
                       className="mt-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-medium text-center"
-                  >
+                    >
                       View Details →
-                  </button>
+                    </button>
+                  </div>
                   </div>
               ))}
           </div>

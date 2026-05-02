@@ -33,7 +33,7 @@ const Insights: React.FC = () => {
           id="usecases-heading"
           className="text-3xl md:text-4xl font-bold mb-2"
         >
-          Explore Our Use Cases
+          Explore By Categories
         </h2>
         <p className="text-gray-600 dark:text-gray-300 text-sm md:text-base">
           Discover how our innovative solutions transform industries worldwide.

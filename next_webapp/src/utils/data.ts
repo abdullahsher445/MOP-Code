@@ -434,28 +434,28 @@ export const recentCaseStudies = [
     id: "biotechnology",
     title: "Biotechnology",
     description:
-      "Explore how biotechnology leverages Melbourne's open data to drive innovation in healthcare, research, and sustainable solutions. - dummy data",
+      "A data-powered biotechnology solution that supports smarter healthcare research, precision analysis, and evidence-based innovation outcomes.",
     image: "/img/biotech.jpeg",
   },
   {
     id: "oil-supply-management",
     title: "Oil Supply Management",
     description:
-      "Analyze supply chain efficiency and demand forecasting in oil distribution using data-driven insights from Melbourne. - dummy data",
+      "A smart oil supply solution that improves demand forecasting, monitors distribution flow, and reduces operational inefficiencies in real time.",
     image: "/img/Oil-Supply.jpg",
   },
   {
     id: "gas-supply-management",
     title: "Gas Supply Management",
     description:
-      "Utilize real-time data to optimize gas supply networks, improve distribution, and ensure energy sustainability. - dummy data",
+      "A real-time gas network solution that optimizes pipeline distribution, improves reliability, and supports more sustainable energy planning.",
     image: "/img/gas-supply.png",
   },
   {
     id: "education",
     title: "Education",
     description:
-      "Enhance learning outcomes through data-driven decision-making and smart education systems powered by Melbourne's open data. - dummy data",
+      "A data-informed education solution that helps improve learning outcomes, identify student needs, and guide smarter teaching decisions.",
     image: "/img/education.jpg",
   },
 ];

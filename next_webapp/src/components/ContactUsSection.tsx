@@ -27,17 +27,48 @@ export default function ContactUsSection() {
 
   const [errors, setErrors] = useState<FormErrorsType>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [failureMessage, setFailureMessage] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-
+  
+    const updatedValue = name === "message" ? value.slice(0, 255) : value;
+  
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "message" ? value.slice(0, 255) : value,
+      [name]: updatedValue,
     }));
-
+  
+    
+    if (name === "email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+      if (!updatedValue.trim()) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "Email is required",
+        }));
+      } else if (!emailRegex.test(updatedValue)) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "Please enter a valid email address",
+        }));
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.email;
+          return newErrors;
+        });
+      }
+  
+      return;
+    }
+  
+    
     setErrors((prev) => ({
       ...prev,
       [name]: "",
@@ -72,22 +103,51 @@ export default function ContactUsSection() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitted(true);
+    setFailureMessage("");
+    setSuccessMessage("");
 
     if (!validateForm()) return;
 
-    console.log("Form submitted:", formData);
+    try {
+      setIsSubmitting(true);
 
-    // reset form after successful submit
-    setFormData({
-      fullName: "",
-      email: "",
-      subject: "",
-      message: "",
-    });
-    setErrors({});
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to submit the form.");
+      }
+
+      setSuccessMessage("Your message has been sent successfully.");
+      setFormData({
+        fullName: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+      setErrors({});
+    } catch (error: any) {
+      setFailureMessage(
+        error?.message || "Failed to submit the form. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -247,16 +307,23 @@ export default function ContactUsSection() {
 
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:scale-[1.01]"
-              >
-                Send Message
+                disabled={isSubmitting}
+                className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+               {isSubmitting ? "Sending..." : "Send Message"}
               </button>
 
-              {isSubmitted && Object.keys(errors).length === 0 && (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  Form is valid and ready to connect with backend.
-                </p>
+              {successMessage && (
+               <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                {successMessage}
+               </p>
               )}
+
+{failureMessage && (
+  <p className="text-sm text-red-500">
+    {failureMessage}
+  </p>
+)}
             </form>
           </div>
         </div>

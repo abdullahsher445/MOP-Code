@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
@@ -10,6 +9,7 @@ import {
 import LanguageDropdown from "./LanguageDropdown";
 import { HiMenu, HiX, HiMoon, HiSun, HiChevronDown } from "react-icons/hi";
 import { useTheme } from "../hooks/useTheme";
+
 import { usePathname } from "next/navigation";
 
 const languages = [
@@ -30,17 +30,19 @@ const Header = () => {
 	const i18nRouter = useI18nRouter();
 
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
-	const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-	const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
-	const [isLangOpen, setIsLangOpen] = useState(false);
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
+const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
+const [isLangOpen, setIsLangOpen] = useState(false);
+const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-	const { theme, toggleTheme } = useTheme();
+const { theme, toggleTheme } = useTheme();
 
-	useEffect(() => {
-		const token = localStorage.getItem("token");
-		setIsLoggedIn(!!token);
-	}, []);
+useEffect(() => {
+	const token = localStorage.getItem("token");
+	const user = localStorage.getItem("user");
+
+	setIsLoggedIn(!!token && !!user);
+}, []);
 
 	const handleLogout = () => {
 		localStorage.removeItem("token");
@@ -75,7 +77,9 @@ const Header = () => {
 	const navItems = [
 		{ type: "link", name: "Home", link: "/" },
 		{ type: "link", name: "About Us", link: "/about" },
-		{ type: "link", name: "Profile", link: "/profile" },
+		...(isLoggedIn
+			? [{ type: "link", name: "Profile", link: "/profile" }]
+			: []),
 		{
 			type: "dropdown",
 			name: "Explore",

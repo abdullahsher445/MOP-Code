@@ -190,14 +190,33 @@ const Contact = () => {
   try {
     setIsSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const response = await fetch("/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName: `${formValues.firstName} ${formValues.lastName}`.trim(),
+        email: formValues.email,
+        subject: formValues.subject,
+        message: `Phone: ${formValues.phone}\n\n${formValues.message}`,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Failed to submit the form.");
+    }
 
     setSuccessMessage("Your message has been sent successfully.");
     setShowSuccess(true);
     setFormValues(initialValues);
     setErrors({});
-  } catch (error) {
-    setFailureMessage("Failed to submit the form. Please try again.");
+  } catch (error: any) {
+    setFailureMessage(
+      error?.message || "Failed to submit the form. Please try again."
+    );
   } finally {
     setIsSubmitting(false);
   }

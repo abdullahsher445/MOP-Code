@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 function getAuthHeaders(): HeadersInit {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -18,27 +18,38 @@ function getAuthHeaders(): HeadersInit {
   };
 }
 
+const PAGE_SIZE = 10;
+
 export default function CategoriesPage() {
   const { locale } = useParams() as { locale: string };
 
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    fetchCategories(page);
+  }, [page]);
 
-  async function fetchCategories() {
+  async function fetchCategories(currentPage: number) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/categories", {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        pageSize: String(PAGE_SIZE),
+      });
+      const res = await fetch(`/api/categories?${params}`, {
         headers: getAuthHeaders(),
       });
       const json = await res.json();
       if (json.success) {
         setCategories(json.data || []);
+        setTotalPages(json.pagination?.totalPages ?? 1);
+        setTotal(json.pagination?.total ?? 0);
       } else {
         setError(json.message || "Failed to load categories.");
       }
@@ -61,11 +72,19 @@ export default function CategoriesPage() {
         alert(json.message || "Failed to delete category.");
         return;
       }
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+      // If we deleted the last item on a non-first page, go back one page
+      if (categories.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        fetchCategories(page);
+      }
     } catch {
       alert("Failed to delete category.");
     }
   }
+
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div>
@@ -89,7 +108,6 @@ export default function CategoriesPage() {
         </Link>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
@@ -173,6 +191,36 @@ export default function CategoriesPage() {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <p className="text-sm text-[#687280]">
+            Showing {rangeStart}–{rangeEnd} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 1}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </button>
+            <span className="text-sm text-[#687280]">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page === totalPages}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

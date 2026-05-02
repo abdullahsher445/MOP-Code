@@ -3,9 +3,13 @@
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Camera, User, Mail, Phone, MapPin, Calendar, Save } from "lucide-react";
 
 const Profile = () => {
+  const router = useRouter();
+  const params = useParams();
+  const locale = params?.locale || "en";
   const [darkMode, setDarkMode] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [formData, setFormData] = useState({
@@ -30,26 +34,28 @@ const Profile = () => {
   }, [darkMode]);
 
   useEffect(() => {
-    // First, populate from localStorage if available
+    const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        // console.log("Loaded user from localStorage:", userData);
-        setFormData((prev) => ({
-          ...prev,
-          email: userData.email || "",
-          first_name: userData.firstName || "",
-          last_name: userData.lastName || "",
-        }));
-      } catch (e) {
-        console.error("Failed to parse stored user data:", e);
-      }
+
+    if (!token || !storedUser) {
+      router.replace(`/${locale}/login`);
+      return;
     }
 
-    // Then fetch full profile from API
+    try {
+      const userData = JSON.parse(storedUser);
+      setFormData((prev) => ({
+        ...prev,
+        email: userData.email || "",
+        first_name: userData.firstName || "",
+        last_name: userData.lastName || "",
+      }));
+    } catch (e) {
+      console.error("Failed to parse stored user data:", e);
+    }
+
     fetchProfile();
-  }, []);
+  }, [router, locale]);
 
   const getUserId = () => {
     // Try to get userId from localStorage first (set during login)

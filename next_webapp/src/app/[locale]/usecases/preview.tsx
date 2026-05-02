@@ -3,26 +3,26 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useMemo, useState, useEffect } from "react";
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-} from "lucide-react";
+import React from "react";
+import { ArrowRight, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { CaseStudy } from "../../types";
-
-const ITEMS_PER_PAGE = 9;
 
 interface CardProps {
   study: CaseStudy;
 }
 
-const UseCaseCard: React.FC<CardProps> = ({ study }) => {
-  const params = useParams();
-  const locale = params.locale as string;
-  const categoryLabel =
-  study.category?.replace(/_/g, " ") || "General";
+
+const Card: React.FC<CardProps> = ({ study, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`${CARD_W} ${CARD_H} overflow-hidden bg-white dark:bg-dark border border-gray-200 dark:border-gray-600 shadow hover:shadow-lg transition-shadow flex flex-col justify-between p-4 cursor-pointer`}
+  >
+    {/* Icon */}
+    <div className="flex justify-center mb-2">
+      <FileText size={48} className="text-primary" />
+      <FileText size={48} className="-ml-6 text-teal-400" />
+      <FileText size={48} className="-ml-6 rotate-6 text-green-700" />
+    </div>
 
   return (
     <Link
@@ -45,8 +45,6 @@ const UseCaseCard: React.FC<CardProps> = ({ study }) => {
       </div>
 
       <div className="p-5">
-       
-
         <h3 className="mb-3 text-xl font-bold leading-snug text-gray-900 dark:text-white">
           {study.title}
         </h3>
@@ -82,22 +80,19 @@ const UseCaseCard: React.FC<CardProps> = ({ study }) => {
 
 interface Props {
   caseStudies: CaseStudy[];
+  page: number;
+  totalPages: number;
+  total: number;
+  onPageChange: (page: number) => void;
 }
 
-const PreviewComponent: React.FC<Props> = ({ caseStudies }) => {
-  const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    setPage(1);
-  }, [caseStudies]);
-
-  const totalPages = Math.ceil(caseStudies.length / ITEMS_PER_PAGE);
-
-  const visibleStudies = useMemo(() => {
-    const start = (page - 1) * ITEMS_PER_PAGE;
-    return caseStudies.slice(start, start + ITEMS_PER_PAGE);
-  }, [caseStudies, page]);
-
+const PreviewComponent: React.FC<Props> = ({
+  caseStudies,
+  page,
+  totalPages,
+  total,
+  onPageChange,
+}) => {
   if (!caseStudies.length) {
     return (
       <section className="rounded-[28px] border border-dashed border-gray-300 bg-white px-6 py-16 text-center shadow-sm dark:border-gray-600 dark:bg-gray-800">
@@ -127,7 +122,7 @@ const PreviewComponent: React.FC<Props> = ({ caseStudies }) => {
               Tiled showcase of use cases
             </h2>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-              Showing {visibleStudies.length} of {caseStudies.length} use cases
+              Showing {caseStudies.length} of {total} use cases
             </p>
           </div>
 
@@ -138,7 +133,7 @@ const PreviewComponent: React.FC<Props> = ({ caseStudies }) => {
       </section>
 
       <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {visibleStudies.map((study) => (
+        {caseStudies.map((study) => (
           <UseCaseCard key={study.id} study={study} />
         ))}
       </section>
@@ -146,7 +141,7 @@ const PreviewComponent: React.FC<Props> = ({ caseStudies }) => {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <button
-            onClick={() => setPage((prev) => prev - 1)}
+            onClick={() => onPageChange(page - 1)}
             disabled={page === 1}
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
           >
@@ -158,7 +153,7 @@ const PreviewComponent: React.FC<Props> = ({ caseStudies }) => {
           </span>
 
           <button
-            onClick={() => setPage((prev) => prev + 1)}
+            onClick={() => onPageChange(page + 1)}
             disabled={page === totalPages}
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
           >

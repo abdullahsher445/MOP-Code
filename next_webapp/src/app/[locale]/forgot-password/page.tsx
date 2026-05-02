@@ -3,6 +3,11 @@
 import React, { useState } from "react";
 import { Link } from "@/i18n-navigation";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  MISSING_FIELDS: "Please enter your email address.",
+  INVALID_EMAIL: "Please enter a valid email address.",
+};
+
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -29,7 +34,11 @@ const ForgotPasswordPage = () => {
       if (response.ok) {
         setSuccess(true);
       } else {
-        setError(data.message || "Something went wrong. Please try again.");
+        setError(
+          ERROR_MESSAGES[data.code] ||
+            data.message ||
+            "Something went wrong. Please try again.",
+        );
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -72,7 +81,7 @@ const ForgotPasswordPage = () => {
 
           {success && (
             <div className="rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 p-3 text-sm mb-5">
-              Check your email for a temporary password and reset link.
+              If this email exists, a temporary password has been sent. Please check your inbox and follow the link in the email to reset your password.
             </div>
           )}
 

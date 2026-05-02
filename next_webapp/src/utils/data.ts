@@ -1,3 +1,4 @@
+
 export const useCases = [
   {
     id: "business-and-economy",

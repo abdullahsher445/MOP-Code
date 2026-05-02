@@ -17,6 +17,7 @@ interface CardProps {
   onClick?: () => void;
 }
 
+
 const Card: React.FC<CardProps> = ({ study, onClick }) => (
   <div
     onClick={onClick}

@@ -3,6 +3,7 @@ import React from "react";
 import { Link } from "@/i18n-navigation";
 import { useCases } from "@/utils/data";
 
+
 const categoryStyles: Record<string, { badge: string; border: string }> = {
   "business-and-economy":        { badge: "bg-blue-100 text-blue-700",   border: "hover:border-blue-400" },
   "community-and-social-impact": { badge: "bg-pink-100 text-pink-700",   border: "hover:border-pink-400" },

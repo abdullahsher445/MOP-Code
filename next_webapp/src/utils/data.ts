@@ -297,7 +297,7 @@ export const useCases = [
         link: "",
       },
       {
-        heading: "Parking slot occupany",
+        heading: "Parking slot occupancy",
         description:
           "Enhance city transit systems using passenger and route data.",
         image: "/img/2bafb41a2f7d47daa950025568befe0218893c90-2880x1440.avif",
@@ -320,7 +320,7 @@ export const useCases = [
     ],
   },
   {
-    id: "urban-planing-and-development",
+    id: "urban-planning-and-development",
     title: "Urban Planning and Development",
     description:
       "Design smarter cities by integrating AI, IoT, and sustainable planning to optimize infrastructure and resources.",
@@ -385,7 +385,7 @@ export const useCases = [
     ],
   },
   {
-    id: "helth-and-wellbeign",
+    id: "health-and-wellbeing",
     title: "Health and Wellbeing",
     description:
       "Utilize predictive analytics and AI to enhance healthcare outcomes and promote overall wellbeing.",

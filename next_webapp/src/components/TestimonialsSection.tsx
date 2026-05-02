@@ -14,32 +14,32 @@ type Testimonial = {
 const testimonials: Testimonial[] = [
   {
     quote:
-      "This platform helped us present our work more clearly and connect with the right audience.",
+      "Melbourne Open Playground makes our open data accessible and meaningful for the broader community. It is exactly the kind of platform we hoped would emerge from this collaboration.",
+    organization: "City of Melbourne",
+    logo: "/partners/user.png",
+  },
+  {
+    quote:
+      "A fantastic platform that brings together data science and civic technology in one place. Our students have found it invaluable for exploring real-world datasets from their own city.",
     organization: "Deakin University",
     logo: "/partners/user.png",
   },
   {
     quote:
-      "A clean and practical solution that made collaboration and content sharing much easier. The workflow felt more organized, and the structure made it easier for different teams to stay aligned during the project lifecycle.",
-    organization: "Lenovo",
+      "MOP gives researchers and community members the tools to explore Melbourne's open data in a practical and meaningful way. The platform is well structured and easy to navigate.",
+    organization: "Melbourne Data Community",
     logo: "/partners/user.png",
   },
   {
     quote:
-      "The overall experience was smooth, modern, and genuinely useful for our team. The interface was easy to understand, and the responsiveness across devices made a big difference for day-to-day use.",
-    organization: "User",
+      "The depth of use cases available on this platform is impressive. It has become a go-to resource for understanding how open data can drive better decisions across the city.",
+    organization: "Open Data Institute",
     logo: "/partners/user.png",
   },
   {
     quote:
-      "A thoughtful project with strong usability and a professional feel throughout. It showed attention to detail, both in design and in the way information was presented to users.",
-    organization: "Energy Australia",
-    logo: "/partners/user.png",
-  },
-  {
-    quote:
-      "Highly intuitive and well-designed. It made our workflow much more efficient and reduced the time needed to explain the platform to new users joining the project.",
-    organization: "UFC",
+      "A well-designed and thoughtfully built platform. The range of categories covered. From transport to health to environment, which reflects the true breadth of Melbourne's open data ecosystem.",
+    organization: "Smart Cities Council Australia",
     logo: "/partners/user.png",
   },
 ];

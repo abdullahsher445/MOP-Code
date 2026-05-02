@@ -417,7 +417,7 @@ const Contact = () => {
                 <FiPhone className="mt-1 text-xl" />
                 <div>
                   <p className="text-sm font-medium text-green-100">Phone</p>
-                  <p className="text-base font-semibold">+61 123 456 789</p>
+                  <p className="text-base font-semibold">+61 3 9658 9658 </p>
                 </div>
               </div>
 
@@ -425,7 +425,7 @@ const Contact = () => {
                 <FiMapPin className="mt-1 text-xl" />
                 <div>
                   <p className="text-sm font-medium text-green-100">Location</p>
-                  <p className="text-base font-semibold">Melbourne, Australia</p>
+                  <p className="text-base font-semibold">City of Melbourne, GPO Box 1603, Melbourne VIC 3001</p>
                 </div>
               </div>
             </div>

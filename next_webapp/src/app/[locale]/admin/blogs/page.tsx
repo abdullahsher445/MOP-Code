@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { use, useState } from "react";
 import { Plus, Search, Filter } from "lucide-react";
 import BlogTable from "./components/BlogsTable";
 
-export default function BlogsPage({ params }: any) {
+export default function BlogsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params);
   const [data, setData] = useState([
     {
       id: 1,
@@ -68,7 +69,7 @@ export default function BlogsPage({ params }: any) {
         </div>
 
         <Link
-          href={`/${params.locale}/admin/blogs/add`}
+          href={`/${locale}/admin/blogs/add`}
           className="flex items-center gap-2 rounded-lg bg-[#1F8F50] px-5 py-3 text-white hover:bg-[#2DBE6C]"
         >
           <Plus size={18} />

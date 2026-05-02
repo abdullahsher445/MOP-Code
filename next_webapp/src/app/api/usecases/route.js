@@ -129,10 +129,10 @@ export async function GET(request) {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    // Include tags via junction table in a single query
+    // Step 1: query use cases with count (no relational select — keeps count reliable)
     let query = supabase
       .from('usecases')
-      .select('id, title, description, cover_img, category_id, created_at, usecase_tags(tags(id, name, slug))', { count: 'exact' })
+      .select('id, title, description, cover_img, category_id, created_at', { count: 'exact' })
       .order('created_at', { ascending: false });
 
     // Keyword search — narrows to title, description, or both based on search_by
@@ -253,10 +253,11 @@ export async function GET(request) {
       query = query.in('id', usecaseIds);
     }
 
+    // Step 1: fetch use cases with count
     const { data, error, count } = await query.range(from, to);
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('[GET /api/usecases] fetch error:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to fetch use cases' },
         { status: 500 }
@@ -264,13 +265,30 @@ export async function GET(request) {
     }
 
     const total = count ?? 0;
+    const rows = data || [];
 
-    // Flatten usecase_tags → tags for each use case
-    const usecases = (data || []).map(({ usecase_tags, ...rest }) => ({
-      ...rest,
-      tags: (usecase_tags || [])
-        .map((row) => row.tags)
-        .filter(Boolean),
+    // Step 2: fetch tags for the returned use case IDs in a separate query
+    let tagsByUsecaseId = {};
+
+    if (rows.length > 0) {
+      const ids = rows.map((u) => u.id);
+
+      const { data: ucTags, error: tagsError } = await supabase
+        .from('usecase_tags')
+        .select('usecase_id, tags(id, name, slug)')
+        .in('usecase_id', ids);
+
+      if (!tagsError && ucTags) {
+        for (const row of ucTags) {
+          if (!tagsByUsecaseId[row.usecase_id]) tagsByUsecaseId[row.usecase_id] = [];
+          if (row.tags) tagsByUsecaseId[row.usecase_id].push(row.tags);
+        }
+      }
+    }
+
+    const usecases = rows.map((u) => ({
+      ...u,
+      tags: tagsByUsecaseId[u.id] || [],
     }));
 
     return NextResponse.json({

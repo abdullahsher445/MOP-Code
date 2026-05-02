@@ -7,22 +7,9 @@ import React from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { CaseStudy } from "../../types";
 
-interface CardProps {
-  study: CaseStudy;
-}
-
-
-const Card: React.FC<CardProps> = ({ study, onClick }) => (
-  <div
-    onClick={onClick}
-    className={`${CARD_W} ${CARD_H} overflow-hidden bg-white dark:bg-dark border border-gray-200 dark:border-gray-600 shadow hover:shadow-lg transition-shadow flex flex-col justify-between p-4 cursor-pointer`}
-  >
-    {/* Icon */}
-    <div className="flex justify-center mb-2">
-      <FileText size={48} className="text-primary" />
-      <FileText size={48} className="-ml-6 text-teal-400" />
-      <FileText size={48} className="-ml-6 rotate-6 text-green-700" />
-    </div>
+const UseCaseCard: React.FC<{ study: CaseStudy }> = ({ study }) => {
+  const params = useParams<{ locale: string }>();
+  const locale = params?.locale ?? "en";
 
   return (
     <Link

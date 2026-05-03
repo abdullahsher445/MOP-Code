@@ -81,7 +81,7 @@ export async function POST(request: Request) {
             subject: 'Your Temporary Password - MOP Platform',
             text:
                 `Your temporary password is: ${tempPassword}\n\n` +
-                `Please visit the following link to reset your password: ${process.env.NEXT_PUBLIC_APP_URL}/reset-password\n\n` +
+                `Please visit the following link to reset your password: ${process.env.NEXT_PUBLIC_APP_URL}/en/change-password?email=${encodeURIComponent(userData.email)}\n\n` +
                 `This temporary password can only be used once.`,
         });
 

@@ -1,11 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useRouter, Link } from "@/i18n-navigation";
+import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
-const ChangePasswordPage = () => {
+const ERROR_MESSAGES: Record<string, string> = {
+  MISSING_FIELDS: "All fields are required.",
+  PASSWORDS_DO_NOT_MATCH: "New passwords do not match.",
+  PASSWORD_TOO_SHORT: "New password must be at least 8 characters.",
+  SAME_AS_TEMP_PASSWORD: "New password must be different from your temporary password.",
+  INVALID_CREDENTIALS: "No account found for that email address.",
+  INVALID_TEMP_PASSWORD: "Temporary password is incorrect.",
+};
+
+function ChangePasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const emailFromQuery = searchParams.get("email") ?? "";
 
   const [tempPassword, setTempPassword] = useState<string>("");
   const [newPassword, setNewPassword] = useState<string>("");
@@ -17,8 +29,11 @@ const ChangePasswordPage = () => {
 
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const invalidLink = !emailFromQuery;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -35,12 +50,41 @@ const ChangePasswordPage = () => {
       return;
     }
 
-    // TODO: Backend team to wire this up to POST /api/auth/change-password with { tempPassword, newPassword }
+    setLoading(true);
 
-    setSuccess(true);
-    setTimeout(() => {
-      router.push("/login");
-    }, 2000);
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: emailFromQuery,
+          temp_password: tempPassword,
+          new_password: newPassword,
+          confirm_password: confirmNewPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setSuccess(true);
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
+      } else {
+        setError(
+          ERROR_MESSAGES[data.code] ||
+            data.message ||
+            "Something went wrong. Please try again.",
+        );
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,7 +113,13 @@ const ChangePasswordPage = () => {
             Enter your temporary password and set a new one
           </p>
 
-          {error && (
+          {invalidLink && (
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 text-sm mb-5">
+              Invalid or expired reset link. Please request a new password reset.
+            </div>
+          )}
+
+          {!invalidLink && error && (
             <div className="rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 text-sm mb-5">
               {error}
             </div>
@@ -168,10 +218,10 @@ const ChangePasswordPage = () => {
 
             <button
               type="submit"
-              disabled={success}
+              disabled={loading || success || invalidLink}
               className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-3.5 rounded-lg transition mt-6"
             >
-              Submit
+              {loading ? "Updating..." : "Change Password"}
             </button>
           </form>
 
@@ -187,6 +237,12 @@ const ChangePasswordPage = () => {
       </div>
     </div>
   );
-};
+}
 
-export default ChangePasswordPage;
+export default function ChangePasswordPage() {
+  return (
+    <Suspense>
+      <ChangePasswordForm />
+    </Suspense>
+  );
+}

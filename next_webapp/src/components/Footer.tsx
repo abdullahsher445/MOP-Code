@@ -513,33 +513,33 @@ const socialIcons = [
                     }}
                     aria-invalid={newsletterError ? true : undefined}
                     aria-describedby={newsletterError ? 'footer-newsletter-error' : undefined}
-                    className="flex-1 min-w-0 rounded-lg px-2.5 py-1.5 text-white placeholder:text-white/50 outline-none transition shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                    className="flex-1 min-w-0 rounded-lg px-2.5 py-1.5 text-white placeholder:text-white/80 outline-none transition shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
                     style={{
                       fontSize: '0.85rem',
-                      background: 'rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.16)',
                       border: newsletterError
                         ? '1px solid rgba(252, 165, 165, 0.95)'
-                        : '1px solid rgba(255,255,255,0.25)',
+                        : '1px solid rgba(255,255,255,0.45)',
                     }}
                   />
                   <button
                     type="submit"
                     className="rounded-lg px-3 py-1.5 font-semibold whitespace-nowrap transition hover:opacity-95 active:scale-[0.98]"
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.92)';
-                      e.currentTarget.style.color = '#166534';
-                      e.currentTarget.style.border = '1px solid rgba(255,255,255,0.7)';
+                      e.currentTarget.style.background = '#14532d';
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.border = '1px solid rgba(255,255,255,0.9)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(110, 231, 183, 0.24)';
-                      e.currentTarget.style.color = '#f0fdf4';
-                      e.currentTarget.style.border = '1px solid rgba(167, 243, 208, 0.5)';
+                      e.currentTarget.style.background = '#166534';
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.border = '1px solid rgba(255,255,255,0.7)';
                     }}
                     style={{
                       fontSize: '0.85rem',
-                      background: 'rgba(110, 231, 183, 0.24)',
-                      color: '#f0fdf4',
-                      border: '1px solid rgba(167, 243, 208, 0.5)',
+                      background: '#166534',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255,255,255,0.7)',
                       boxShadow: '0 3px 10px rgba(0,0,0,0.18)',
                     }}
                   >

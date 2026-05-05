@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 function getAuthHeaders(): HeadersInit {
@@ -22,6 +22,7 @@ const PAGE_SIZE = 10;
 
 export default function CategoriesPage() {
   const { locale } = useParams() as { locale: string };
+  const router = useRouter();
 
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +47,11 @@ export default function CategoriesPage() {
         headers: getAuthHeaders(),
       });
       const json = await res.json();
+      if (res.status === 401) {
+        localStorage.removeItem("user");
+        router.replace(`/${locale}/login`);
+        return;
+      }
       if (json.success) {
         setCategories(json.data || []);
         setTotalPages(json.pagination?.totalPages ?? 1);
@@ -193,34 +199,32 @@ export default function CategoriesPage() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <p className="text-sm text-[#687280]">
-            Showing {rangeStart}–{rangeEnd} of {total}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => p - 1)}
-              disabled={page === 1}
-              className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </button>
-            <span className="text-sm text-[#687280]">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page === totalPages}
-              className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Next
-              <ChevronRight size={16} />
-            </button>
-          </div>
+      <div className="mt-6 flex items-center justify-between">
+        <p className="text-sm text-[#687280]">
+          Showing {rangeStart}–{rangeEnd} of {total}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 1}
+            className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft size={16} />
+            Previous
+          </button>
+          <span className="text-sm text-[#687280]">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page === totalPages}
+            className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+            <ChevronRight size={16} />
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

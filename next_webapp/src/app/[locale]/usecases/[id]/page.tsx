@@ -13,7 +13,6 @@ const UseCasePage: React.FC = () => {
 
   const [useCase, setUseCase] = useState<any>(null);
   const [tags, setTags] = useState<string[]>([]);
-  const [htmlContent, setHtmlContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -21,10 +20,10 @@ const UseCasePage: React.FC = () => {
     if (!id) return;
 
     Promise.all([
-      fetch(`/api/usecases/${id}`).then((r) => r.json()),
+      fetch(`/api/usecases/${id}?include_content=true`).then((r) => r.json()),
       fetch(`/api/usecases/${id}/tags`).then((r) => r.json()),
     ])
-      .then(async ([ucJson, tagsJson]) => {
+      .then(([ucJson, tagsJson]) => {
         if (!ucJson.success) {
           setNotFound(true);
           return;
@@ -34,12 +33,6 @@ const UseCasePage: React.FC = () => {
 
         if (tagsJson.success && Array.isArray(tagsJson.data)) {
           setTags(tagsJson.data.map((t: any) => t.name));
-        }
-
-        if (ucJson.data?.html_file) {
-          const htmlRes = await fetch(ucJson.data.html_file);
-          const htmlText = await htmlRes.text();
-          setHtmlContent(htmlText);
         }
       })
       .catch(() => setNotFound(true))
@@ -93,6 +86,15 @@ const UseCasePage: React.FC = () => {
             </p>
           )}
 
+          {useCase.created_by_name && (
+            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+              Created by{" "}
+              <span className="font-medium text-gray-700 dark:text-gray-200">
+                {useCase.created_by_name}
+              </span>
+            </p>
+          )}
+
           {tags.length > 0 && (
             <div className="mb-8 flex flex-wrap gap-2">
               {tags.map((tag) => (
@@ -114,16 +116,16 @@ const UseCasePage: React.FC = () => {
             />
           )}
 
-          {htmlContent && (
-            <div
-              className="prose prose-lg max-w-none dark:prose-invert mb-8 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900"
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
+          {useCase.content ? (
+            <iframe
+              srcDoc={useCase.content}
+              className="mb-8 w-full rounded-2xl border border-gray-200 dark:border-gray-700"
+              style={{ height: "80vh", minHeight: "400px" }}
+              title={useCase.title}
             />
-          )}
-
-          {!htmlContent && (
+          ) : (
             <div className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-              No HTML file available for this use case.
+              No notebook content available for this use case.
             </div>
           )}
 

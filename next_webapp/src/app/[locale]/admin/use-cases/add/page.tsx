@@ -410,27 +410,25 @@ export default function AddUseCasePage() {
         coverImgUrl = uploadJson.url;
       }
 
-      // Upload notebook if selected
-      let notebookFileUrl: string | null = null;
+      // Convert notebook to HTML if selected
+      let notebookContent: string | null = null;
       if (notebookFile) {
-        const formData = new FormData();
-        formData.append("file", notebookFile);
-        formData.append("folder", "usecases");
-        formData.append("bucket", "usecase-notebooks");
+        const nbForm = new FormData();
+        nbForm.append("file", notebookFile);
 
-        const uploadRes = await fetch("/api/upload", {
+        const convertRes = await fetch("/api/usecases/convert-notebook", {
           method: "POST",
           headers: authHeaders,
-          body: formData,
+          body: nbForm,
         });
-        const uploadJson = await uploadRes.json();
+        const convertJson = await convertRes.json();
 
-        if (!uploadJson.success) {
-          setError("Notebook upload failed: " + (uploadJson.message || "Unknown error"));
+        if (!convertJson.success) {
+          setError("Notebook conversion failed: " + (convertJson.message || "Unknown error"));
           setSaving(false);
           return;
         }
-        notebookFileUrl = uploadJson.url;
+        notebookContent = convertJson.html;
       }
 
       const res = await fetch("/api/usecases", {
@@ -440,7 +438,7 @@ export default function AddUseCasePage() {
           title,
           description,
           cover_img: coverImgUrl,
-          notebook_file: notebookFileUrl,
+          content: notebookContent,
           category_id: categoryId ? Number(categoryId) : null,
           created_by: userId,
           tags,

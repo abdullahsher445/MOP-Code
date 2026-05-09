@@ -11,7 +11,7 @@ export async function POST(request) {
       return errorResponse("Invalid JSON body", 400, "INVALID_JSON");
     }
 
-    const { title, description, cover_img, category_id, created_by, tags } =
+    const { title, description, cover_img, category_id, created_by, tags, content } =
       body;
 
     if (typeof title !== "string" || title.trim().length === 0) {
@@ -36,6 +36,17 @@ export async function POST(request) {
     if (usecaseError) {
       console.error("[POST /api/usecases] insert error:", usecaseError);
       throw usecaseError;
+    }
+
+    if (content) {
+      const { error: contentError } = await supabase
+        .from("usecases")
+        .update({ content })
+        .eq("id", usecaseRow.id);
+
+      if (contentError) {
+        console.error("[POST /api/usecases] content update error:", contentError);
+      }
     }
 
     const resolvedTags = [];

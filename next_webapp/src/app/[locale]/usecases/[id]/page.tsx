@@ -13,6 +13,7 @@ const UseCasePage: React.FC = () => {
 
   const [useCase, setUseCase] = useState<any>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [htmlContent, setHtmlContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -23,14 +24,22 @@ const UseCasePage: React.FC = () => {
       fetch(`/api/usecases/${id}`).then((r) => r.json()),
       fetch(`/api/usecases/${id}/tags`).then((r) => r.json()),
     ])
-      .then(([ucJson, tagsJson]) => {
+      .then(async ([ucJson, tagsJson]) => {
         if (!ucJson.success) {
           setNotFound(true);
           return;
         }
+
         setUseCase(ucJson.data);
+
         if (tagsJson.success && Array.isArray(tagsJson.data)) {
           setTags(tagsJson.data.map((t: any) => t.name));
+        }
+
+        if (ucJson.data?.html_file) {
+          const htmlRes = await fetch(ucJson.data.html_file);
+          const htmlText = await htmlRes.text();
+          setHtmlContent(htmlText);
         }
       })
       .catch(() => setNotFound(true))
@@ -105,8 +114,21 @@ const UseCasePage: React.FC = () => {
             />
           )}
 
+          {htmlContent && (
+            <div
+              className="prose prose-lg max-w-none dark:prose-invert mb-8 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900"
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
+          )}
+
+          {!htmlContent && (
+            <div className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              No HTML file available for this use case.
+            </div>
+          )}
+
           <Link
-            href="/usecases"
+            href="/en/usecases"
             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-green-600 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
             <ArrowLeft size={16} />

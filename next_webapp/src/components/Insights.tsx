@@ -64,7 +64,7 @@ const Insights: React.FC = () => {
             return (
               <Link
                 key={cat.id}
-                href={`/usecases`}
+                href={`/categories/${cat.id}`}
                 className={`bg-gray-50 dark:bg-[#37474F] hover:bg-gray-100 dark:hover:bg-[#455A64] rounded-2xl shadow-md hover:shadow-2xl border-2 border-transparent ${style.border} transition-all duration-300 flex flex-col group hover:-translate-y-1`}
               >
                 <div className="overflow-hidden rounded-t-2xl">

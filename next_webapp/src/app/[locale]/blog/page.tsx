@@ -65,7 +65,11 @@ export default function BlogListingPage() {
           </div>
 
           {/* Responsive card grid: 1 → 2 → 3 columns */}
-          {blogs.length > 0 ? (
+          {loading ? (
+            <div className="flex min-h-[250px] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-green-500 border-t-transparent" />
+            </div>
+          ) : blogs.length > 0 ? (
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {blogs.map((blog) => (
                 <BlogCard
@@ -83,6 +87,33 @@ export default function BlogListingPage() {
               <p className="text-base font-medium text-gray-500 dark:text-gray-400">
                 No data available at the moment
               </p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12 flex items-center justify-center gap-4">
+              <button
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page === 1}
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-[#242424] dark:text-gray-300 dark:hover:bg-[#2e2e2e]"
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page === totalPages}
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-[#242424] dark:text-gray-300 dark:hover:bg-[#2e2e2e]"
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
             </div>
           )}
         </section>

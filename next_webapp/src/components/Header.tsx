@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
 	Link,
@@ -50,6 +50,7 @@ const Header = () => {
 	const [isLangOpen, setIsLangOpen] = useState(false);
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const { theme, toggleTheme } = useTheme();
+	const exploreRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		const token = localStorage.getItem("token");
@@ -96,7 +97,7 @@ const Header = () => {
 
 	// ─── shared class helpers ────────────────────────────────────────────────
 	const navLinkBase =
-		"px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500";
+		"h-9 inline-flex items-center px-4 rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500";
 	const navLinkActive =
 		"bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md shadow-green-500/25";
 	const navLinkIdle =
@@ -114,7 +115,7 @@ const Header = () => {
 		}`;
 
 	return (
-		<header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-gray-200/60 shadow-sm dark:bg-gray-900/85 dark:border-gray-700/50">
+		<header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
 			<link
 				href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
 				rel="stylesheet"
@@ -203,7 +204,7 @@ const Header = () => {
 					</div>
 
 					{/* ── Right-side actions ───────────────────────────────── */}
-					<div className="flex items-center gap-1.5">
+					<div className="flex items-center gap-3">
 						{/* Theme toggle */}
 						<button
 							onClick={toggleTheme}
@@ -229,14 +230,14 @@ const Header = () => {
 							{isLoggedIn ? (
 								<button
 									onClick={handleLogout}
-									className="inline-flex h-10 min-w-[96px] items-center justify-center rounded-lg border border-green-600 bg-white px-4 text-sm font-medium text-green-600 transition-all duration-200 transform hover:scale-105 hover:bg-green-50 hover:text-green-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:border-green-400 dark:bg-black dark:text-green-300 dark:hover:bg-gray-800"
+									className="h-9 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-600 px-5 text-sm font-medium text-white shadow-md shadow-green-500/25 transition-all duration-200 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
 								>
 									Log Out
 								</button>
 							) : (
 								<Link
 									href="/login"
-									className="inline-flex h-10 min-w-[96px] items-center justify-center rounded-lg border border-green-600 bg-white px-4 text-sm font-medium text-green-600 transition-all duration-200 transform hover:scale-105 hover:bg-green-50 hover:text-green-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:border-green-400 dark:bg-black dark:text-green-300 dark:hover:bg-gray-800"
+									className="h-9 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-600 px-5 text-sm font-medium text-white shadow-md shadow-green-500/25 transition-all duration-200 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
 								>
 									{t("Log In")}
 								</Link>

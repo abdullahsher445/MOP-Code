@@ -186,7 +186,7 @@ const UseCases: React.FC = () => {
 						params.set("tag_name", term);
 					} else {
 						params.set("search", term);
-						params.set("search_by", mode === "content" ? "description" : "title");
+						params.set("search_by", mode);
 					}
 				}
 

@@ -336,7 +336,10 @@ export default function AddUseCasePage() {
   const [tagInput, setTagInput] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const imageUploadPromiseRef = useRef<Promise<string | null> | null>(null);
   const [notebookFile, setNotebookFile] = useState<File | null>(null);
+  const [notebookContent, setNotebookContent] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -356,12 +359,54 @@ export default function AddUseCasePage() {
     if (!file) return;
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+
+    // Start uploading immediately in the background
+    setImageUploading(true);
+    const authHeaders = getAuthHeaders();
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "usecases");
+    formData.append("bucket", "usecase-images");
+
+    imageUploadPromiseRef.current = fetch("/api/upload", {
+      method: "POST",
+      headers: authHeaders,
+      body: formData,
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        setImageUploading(false);
+        return json.success ? (json.url as string) : null;
+      })
+      .catch(() => {
+        setImageUploading(false);
+        return null;
+      });
   }
 
   function handleNotebookFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.name.endsWith(".ipynb")) {
+      setError("Please upload a valid .ipynb file.");
+      return;
+    }
     setNotebookFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      try {
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed.cells)) throw new Error();
+        setNotebookContent(text);
+        setError("");
+      } catch {
+        setError("Invalid notebook file — could not parse .ipynb JSON.");
+        setNotebookFile(null);
+        setNotebookContent(null);
+      }
+    };
+    reader.readAsText(file);
   }
 
   function addTag() {
@@ -387,48 +432,15 @@ export default function AddUseCasePage() {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const userId = Number(user.userId ?? user.id ?? 0);
 
-      // Upload image if selected
+      // Await the pre-upload that started when the user picked the file
       let coverImgUrl: string | null = null;
-      if (imageFile) {
-        const formData = new FormData();
-        formData.append("file", imageFile);
-        formData.append("folder", "usecases");
-        formData.append("bucket", "usecase-images");
-
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          headers: authHeaders,
-          body: formData,
-        });
-        const uploadJson = await uploadRes.json();
-
-        if (!uploadJson.success) {
-          setError("Image upload failed: " + (uploadJson.message || "Unknown error"));
+      if (imageFile && imageUploadPromiseRef.current) {
+        coverImgUrl = await imageUploadPromiseRef.current;
+        if (!coverImgUrl) {
+          setError("Image upload failed. Please remove the image and try again.");
           setSaving(false);
           return;
         }
-        coverImgUrl = uploadJson.url;
-      }
-
-      // Convert notebook to HTML if selected
-      let notebookContent: string | null = null;
-      if (notebookFile) {
-        const nbForm = new FormData();
-        nbForm.append("file", notebookFile);
-
-        const convertRes = await fetch("/api/usecases/convert-notebook", {
-          method: "POST",
-          headers: authHeaders,
-          body: nbForm,
-        });
-        const convertJson = await convertRes.json();
-
-        if (!convertJson.success) {
-          setError("Notebook conversion failed: " + (convertJson.message || "Unknown error"));
-          setSaving(false);
-          return;
-        }
-        notebookContent = convertJson.html;
       }
 
       const res = await fetch("/api/usecases", {
@@ -438,7 +450,7 @@ export default function AddUseCasePage() {
           title,
           description,
           cover_img: coverImgUrl,
-          content: notebookContent,
+          content: notebookContent ?? null,
           category_id: categoryId ? Number(categoryId) : null,
           created_by: userId,
           tags,
@@ -606,12 +618,17 @@ export default function AddUseCasePage() {
             className="hidden"
             onChange={handleFileChange}
           />
+          {imageUploading && (
+            <p className="mt-2 text-xs text-[#687280]">Uploading image...</p>
+          )}
           {imagePreview && (
             <button
               type="button"
               onClick={() => {
                 setImageFile(null);
                 setImagePreview(null);
+                setImageUploading(false);
+                imageUploadPromiseRef.current = null;
               }}
               className="mt-2 text-xs text-red-500 hover:underline"
             >
@@ -649,7 +666,7 @@ export default function AddUseCasePage() {
           {notebookFile && (
             <button
               type="button"
-              onClick={() => setNotebookFile(null)}
+              onClick={() => { setNotebookFile(null); setNotebookContent(null); }}
               className="mt-2 text-xs text-red-500 hover:underline"
             >
               Remove notebook
@@ -665,7 +682,11 @@ export default function AddUseCasePage() {
             className="inline-flex items-center gap-2 rounded-full bg-[#2DBE6C] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#1F8F50] disabled:opacity-60"
           >
             <Save size={18} />
-            {saving ? "Saving..." : "Save Use Case"}
+            {imageUploading && saving
+              ? "Uploading image..."
+              : saving
+              ? "Saving..."
+              : "Save Use Case"}
           </button>
           <button
             type="button"

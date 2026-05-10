@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import NotebookRenderer from "@/components/NotebookRenderer";
 
 const UseCasePage: React.FC = () => {
   const params = useParams();
@@ -117,12 +118,27 @@ const UseCasePage: React.FC = () => {
           )}
 
           {useCase.content ? (
-            <iframe
-              srcDoc={useCase.content}
-              className="mb-8 w-full rounded-2xl border border-gray-200 dark:border-gray-700"
-              style={{ height: "80vh", minHeight: "400px" }}
-              title={useCase.title}
-            />
+            (() => {
+              try {
+                const parsed = JSON.parse(useCase.content);
+                if (Array.isArray(parsed.cells)) {
+                  return (
+                    <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+                      <NotebookRenderer content={useCase.content} />
+                    </div>
+                  );
+                }
+              } catch {}
+              // fallback for old HTML content already in DB
+              return (
+                <iframe
+                  srcDoc={useCase.content}
+                  className="mb-8 w-full rounded-2xl border border-gray-200 dark:border-gray-700"
+                  style={{ height: "80vh", minHeight: "400px" }}
+                  title={useCase.title}
+                />
+              );
+            })()
           ) : (
             <div className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
               No notebook content available for this use case.

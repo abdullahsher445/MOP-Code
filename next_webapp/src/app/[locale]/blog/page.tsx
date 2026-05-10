@@ -238,6 +238,33 @@ export default function BlogListingPage() {
               </p>
             </div>
           )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-12 flex items-center justify-center gap-4">
+              <button
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page === 1}
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-[#242424] dark:text-gray-300 dark:hover:bg-[#2e2e2e]"
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page === totalPages}
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-[#242424] dark:text-gray-300 dark:hover:bg-[#2e2e2e]"
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
         </section>
       </main>
 

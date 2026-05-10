@@ -34,9 +34,7 @@ export default function EditUseCasePage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [existingNotebookUrl, setExistingNotebookUrl] = useState<string | null>(
-    null
-  );
+  const [hasExistingNotebook, setHasExistingNotebook] = useState(false);
   const [notebookFile, setNotebookFile] = useState<File | null>(null);
 
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -72,9 +70,7 @@ export default function EditUseCasePage() {
         setExistingImgUrl(uc.cover_img || null);
         setImagePreview(uc.cover_img || null);
 
-        setExistingNotebookUrl(
-          uc.notebook_file || uc.notebook_url || uc.python_notebook || null
-        );
+        setHasExistingNotebook(!!uc.content);
 
         if (tagsJson.success && Array.isArray(tagsJson.data)) {
           setTags(tagsJson.data.map((t: any) => t.name));
@@ -167,32 +163,30 @@ export default function EditUseCasePage() {
         coverImgUrl = uploadJson.url;
       }
 
-      let notebookUrl: string | null = existingNotebookUrl;
-
+      // Convert notebook to HTML if a new file was selected
+      let updatedContent: string | undefined = undefined;
       if (notebookFile) {
-        const formData = new FormData();
-        formData.append("file", notebookFile);
-        formData.append("folder", "usecases/notebooks");
-        formData.append("bucket", "usecase-notebooks");
+        const nbForm = new FormData();
+        nbForm.append("file", notebookFile);
 
-        const uploadRes = await fetch("/api/upload", {
+        const convertRes = await fetch("/api/usecases/convert-notebook", {
           method: "POST",
           headers: authHeaders,
-          body: formData,
+          body: nbForm,
         });
 
-        const uploadJson = await uploadRes.json();
+        const convertJson = await convertRes.json();
 
-        if (!uploadJson.success) {
+        if (!convertJson.success) {
           setSaveError(
-            "Notebook upload failed: " +
-              (uploadJson.message || "Unknown error")
+            "Notebook conversion failed: " +
+              (convertJson.message || "Unknown error")
           );
           setSaving(false);
           return;
         }
 
-        notebookUrl = uploadJson.url;
+        updatedContent = convertJson.html;
       }
 
       const res = await fetch(`/api/usecases/${id}`, {
@@ -206,7 +200,7 @@ export default function EditUseCasePage() {
           description,
           cover_img: coverImgUrl,
           category_id: categoryId ? Number(categoryId) : null,
-          notebook_file: notebookUrl,
+          ...(updatedContent !== undefined ? { content: updatedContent } : {}),
           tags,
         }),
       });
@@ -453,7 +447,7 @@ export default function EditUseCasePage() {
               <h3 className="mt-3 text-sm font-semibold text-[#1A1A1A]">
                 {notebookFile
                   ? notebookFile.name
-                  : existingNotebookUrl
+                  : hasExistingNotebook
                   ? "Notebook already uploaded"
                   : "Upload Python notebook"}
               </h3>
@@ -471,13 +465,12 @@ export default function EditUseCasePage() {
               onChange={handleNotebookChange}
             />
 
-            {(notebookFile || existingNotebookUrl) && (
+            {(notebookFile || hasExistingNotebook) && (
               <button
                 type="button"
                 onClick={() => {
                   setNotebookFile(null);
-                  setExistingNotebookUrl(null);
-
+                  setHasExistingNotebook(false);
                   if (notebookInputRef.current) {
                     notebookInputRef.current.value = "";
                   }

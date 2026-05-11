@@ -18,7 +18,7 @@ const intlMiddleware = createMiddleware({
 // <<<<<<< HEAD
 // //const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics","/api/profile"];
 // //commented just for front end testing
-const PROTECTED_PATHS = [ "/upload", "/statistics","/api/profile"];
+//const PROTECTED_PATHS = [ "/upload", "/statistics","/api/profile"];
 // =======
 // const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics","/api/profile", "/api/categories"];
 const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics", "/api/profile", "/api/categories"];

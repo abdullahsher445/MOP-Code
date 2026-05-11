@@ -31,17 +31,24 @@ export default function AdminLayout({
     }
 
     setAuthorized(true);
-  }, []);
+  }, [locale, router]);
 
   if (!authorized) return null;
 
   return (
-    <div className="flex min-h-screen bg-[#F5F5F5]">
-      <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <div className="flex-1">
-        <AdminHeader />
-        <main className="p-8">{children}</main>
-      </div>
+  <div className="min-h-screen bg-[#F5F5F5]">
+    <AdminSidebar
+      sidebarOpen={sidebarOpen}
+      setSidebarOpen={setSidebarOpen}
+    />
+
+    <div className="flex min-h-screen flex-col pl-[64px]">
+      <AdminHeader />
+
+      <main className="w-full max-w-full flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        {children}
+      </main>
     </div>
-  );
+  </div>
+);
 }

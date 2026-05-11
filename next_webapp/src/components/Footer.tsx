@@ -594,7 +594,7 @@ const Footer = () => {
 										aria-describedby={
 											newsletterError ? "footer-newsletter-error" : undefined
 										}
-										className="min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] outline-none transition placeholder:text-white/50"
+										className="newsletter-email-input min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] outline-none transition placeholder:text-white placeholder:opacity-100"
 										style={{
 											fontSize: "0.85rem",
 											background: "rgba(255,255,255,0.1)",

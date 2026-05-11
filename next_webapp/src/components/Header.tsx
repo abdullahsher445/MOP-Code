@@ -152,7 +152,7 @@ const Header = () => {
 											isActiveLink(item.link) ? navLinkActive : navLinkIdle
 										}`}
 									>
-										{item.name}
+										{t(item.name)}
 									</Link>
 								) : (
 									/* Explore dropdown – click-based, stays open until closed */
@@ -191,7 +191,7 @@ const Header = () => {
 															onClick={() => setOpenDropdown(null)}
 															className={dropdownItem(isActiveLink(sub.link))}
 														>
-															{sub.name}
+															{t(sub.name)}
 														</Link>
 													))}
 												</div>

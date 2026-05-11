@@ -1,6 +1,7 @@
+import sharp from "sharp";
 import { supabase } from "@/library/supabaseClient";
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export async function uploadImageToStorage({
@@ -28,15 +29,26 @@ export async function uploadImageToStorage({
     throw new Error("Image size must be less than 5MB");
   }
 
-  const buffer = await file.arrayBuffer();
-  const extension = file.name.split(".").pop() || "jpg";
-  const filename = `${prefix}-${userId}-${Date.now()}.${extension}`;
+  const arrayBuffer = await file.arrayBuffer();
+  const inputBuffer = Buffer.from(arrayBuffer);
+
+  const optimizedBuffer = await sharp(inputBuffer)
+    .resize({
+      width: 1600,
+      withoutEnlargement: true,
+    })
+    .webp({
+      quality: 80,
+    })
+    .toBuffer();
+
+  const filename = `${prefix}-${userId}-${Date.now()}.webp`;
   const filePath = `${folder}/${filename}`;
 
   const { error } = await supabase.storage
     .from(bucket)
-    .upload(filePath, buffer, {
-      contentType: file.type,
+    .upload(filePath, optimizedBuffer, {
+      contentType: "image/webp",
       upsert: false,
     });
 

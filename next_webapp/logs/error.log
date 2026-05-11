@@ -1,3 +1,12 @@
 2026-05-10 15:35:34:3534 [31merror[39m: [31mAPI Error Response: 400 - User already exists (USER_EXISTS)[39m
 2026-05-10 15:54:37:5437 [31merror[39m: [31mSignup Error: Unexpected end of JSON input[39m
 2026-05-10 15:54:37:5437 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:49:22:4922 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:50:47:5047 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:54:03:543 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:56:25:5625 [31merror[39m: [31mAPI Error Response: 401 - Invalid email or password (INVALID_CREDENTIALS)[39m
+2026-05-12 01:57:13:5713 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 02:00:07:07 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 02:00:18:018 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 02:01:52:152 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 02:06:50:650 [31merror[39m: [31mDatabase error fetching logs: Requested range not satisfiable[39m

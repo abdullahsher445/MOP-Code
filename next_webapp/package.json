@@ -46,14 +46,10 @@
     "react-quill": "^2.0.0",
     "react-social-media-embed": "^2.5.18",
     "react-tag-input-component": "^2.0.2",
-<<<<<<< backend_work
-    "save": "^2.9.0",
-    "winston": "^3.19.0"
-=======
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "save": "^2.9.0"
->>>>>>> backend_work
+    "save": "^2.9.0",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.25.4",

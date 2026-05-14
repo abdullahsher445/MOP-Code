@@ -1,0 +1,76 @@
+2026-05-10 15:18:36:1836 [32minfo[39m: [32mRequest: POST /api/auth/signup - IP: ::1 - User-Agent: Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115[39m
+2026-05-10 15:19:23:1923 [32minfo[39m: [32mRequest: GET /api/categories - IP: ::1 - User-Agent: Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.26100.8115[39m
+2026-05-10 15:35:32:3532 [32minfo[39m: [32mRequest: POST /api/auth/signup[39m
+2026-05-10 15:35:34:3534 [31merror[39m: [31mAPI Error Response: 400 - User already exists (USER_EXISTS)[39m
+2026-05-10 15:53:14:5314 [32minfo[39m: [32mRequest: GET /api/categories[39m
+2026-05-10 15:53:32:5332 [32minfo[39m: [32mRequest: GET /api/categories[39m
+2026-05-10 15:53:50:5350 [32minfo[39m: [32mRequest: GET /api/categories[39m
+2026-05-10 15:54:01:541 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 15:54:12:5412 [32minfo[39m: [32mRequest: GET /api/categories[39m
+2026-05-10 15:54:37:5437 [32minfo[39m: [32mRequest: POST /api/auth/signup[39m
+2026-05-10 15:54:37:5437 [31merror[39m: [31mSignup Error: Unexpected end of JSON input[39m
+2026-05-10 15:54:37:5437 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-10 15:56:33:5633 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 15:56:34:5634 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 15:57:21:5721 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 15:57:36:5736 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 15:57:36:5736 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 15:58:20:5820 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 15:58:30:5830 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 15:58:30:5830 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 15:59:00:590 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 15:59:00:590 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 15:59:21:5921 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 15:59:37:5937 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 15:59:37:5937 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 16:02:52:252 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:02:57:257 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:03:17:317 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 16:03:17:317 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 16:03:43:343 [32minfo[39m: [32mRequest: GET /[39m
+2026-05-10 16:03:43:343 [32minfo[39m: [32mRequest: GET /en[39m
+2026-05-10 16:04:30:430 [32minfo[39m: [32mRequest: GET /en[39m
+2026-05-10 16:04:31:431 [32minfo[39m: [32mRequest: GET /en/login[39m
+2026-05-10 16:04:39:439 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:04:40:440 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-10 16:04:51:451 [32minfo[39m: [32mRequest: GET /en/admin/categories[39m
+2026-05-10 16:04:53:453 [32minfo[39m: [32mRequest: GET /api/categories?page=1&pageSize=10[39m
+2026-05-10 16:04:54:454 [32minfo[39m: [32mRequest: GET /api/categories?page=1&pageSize=10[39m
+2026-05-10 16:04:56:456 [32minfo[39m: [32mRequest: GET /en/admin/use-cases[39m
+2026-05-10 16:04:58:458 [32minfo[39m: [32mRequest: GET /en/admin/use-cases[39m
+2026-05-10 16:05:00:50 [32minfo[39m: [32mRequest: GET /api/categories?pageSize=100[39m
+2026-05-10 16:05:00:50 [32minfo[39m: [32mRequest: GET /api/categories?pageSize=100[39m
+2026-05-10 16:05:04:54 [32minfo[39m: [32mRequest: GET /en/admin/blogs[39m
+2026-05-10 16:05:06:56 [32minfo[39m: [32mRequest: GET /api/blogs?page=1&pageSize=10[39m
+2026-05-10 16:05:07:57 [32minfo[39m: [32mRequest: GET /api/blogs?page=1&pageSize=10[39m
+2026-05-10 16:05:14:514 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-10 16:05:17:517 [32minfo[39m: [32mRequest: GET /en/login[39m
+2026-05-10 16:05:55:555 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:05:56:556 [32minfo[39m: [32mRequest: GET /en/profile[39m
+2026-05-10 16:05:59:559 [32minfo[39m: [32mRequest: GET /api/profile[39m
+2026-05-10 16:06:00:60 [32minfo[39m: [32mRequest: GET /api/profile[39m
+2026-05-10 16:06:03:63 [32minfo[39m: [32mRequest: GET /en[39m
+2026-05-10 16:06:07:67 [32minfo[39m: [32mRequest: GET /en/login[39m
+2026-05-10 16:06:11:611 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:06:11:611 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-10 16:06:19:619 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:06:44:644 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 16:06:46:646 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 16:08:23:823 [32minfo[39m: [32mRequest: GET /api/profile[39m
+2026-05-10 16:12:39:1239 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:12:57:1257 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 16:12:57:1257 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 16:16:01:161 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 16:16:01:161 [33mwarn[39m: [33mUnauthorized access attempt to logs API[39m
+2026-05-10 16:16:29:1629 [32minfo[39m: [32mRequest: GET /[39m
+2026-05-10 16:16:29:1629 [32minfo[39m: [32mRequest: GET /en[39m
+2026-05-10 16:24:43:2443 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-10 16:24:59:2459 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-10 16:25:05:255 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-10 16:25:07:257 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-10 16:25:24:2524 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:25:33:2533 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 16:25:33:2533 [32minfo[39m: [32mAdmin accessed logs API[39m
+2026-05-10 16:25:48:2548 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-10 16:26:21:2621 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-10 16:26:21:2621 [33mwarn[39m: [33mNon-admin access attempt to logs API[39m

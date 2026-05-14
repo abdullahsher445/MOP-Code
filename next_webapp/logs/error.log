@@ -1,0 +1,3 @@
+2026-05-10 15:35:34:3534 [31merror[39m: [31mAPI Error Response: 400 - User already exists (USER_EXISTS)[39m
+2026-05-10 15:54:37:5437 [31merror[39m: [31mSignup Error: Unexpected end of JSON input[39m
+2026-05-10 15:54:37:5437 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m

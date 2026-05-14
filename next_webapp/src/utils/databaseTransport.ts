@@ -16,6 +16,13 @@ interface LogEntry {
   response_time?: number;
 }
 
+const KNOWN_FIELDS = new Set<string | symbol>([
+  'level', 'message', 'source', 'user_id', 'ip_address', 'user_agent',
+  'method', 'url', 'status_code', 'response_time',
+  // winston internals to exclude
+  'timestamp', 'splat', 'service', Symbol.for('level'), Symbol.for('splat'),
+]);
+
 class DatabaseTransport extends winston.Transport {
   constructor(opts?: any) {
     super(opts);
@@ -23,11 +30,18 @@ class DatabaseTransport extends winston.Transport {
 
   async log(info: any, callback: () => void) {
     try {
+      const meta: Record<string, unknown> = {};
+      for (const key of Object.keys(info)) {
+        if (!KNOWN_FIELDS.has(key)) {
+          meta[key] = (info as Record<string, unknown>)[key];
+        }
+      }
+
       const logEntry: LogEntry = {
         level: info.level,
         message: info.message,
         timestamp: new Date().toISOString(),
-        meta: info.meta || {},
+        meta,
         source: info.source || 'application',
         user_id: info.user_id,
         ip_address: info.ip_address,

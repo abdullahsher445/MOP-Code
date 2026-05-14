@@ -74,3 +74,46 @@
 2026-05-10 16:25:48:2548 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
 2026-05-10 16:26:21:2621 [32minfo[39m: [32mRequest: GET /api/logs[39m
 2026-05-10 16:26:21:2621 [33mwarn[39m: [33mNon-admin access attempt to logs API[39m
+2026-05-12 01:49:19:4919 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 01:49:22:4922 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:50:46:5046 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 01:50:47:5047 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:54:02:542 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 01:54:03:543 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:55:45:5545 [32minfo[39m: [32mRequest: GET /[39m
+2026-05-12 01:55:45:5545 [32minfo[39m: [32mRequest: GET /en[39m
+2026-05-12 01:55:57:5557 [32minfo[39m: [32mRequest: HEAD /en[39m
+2026-05-12 01:55:59:5559 [32minfo[39m: [32mRequest: GET /en[39m
+2026-05-12 01:55:59:5559 [32minfo[39m: [32mRequest: GET /en/login[39m
+2026-05-12 01:56:12:5612 [32minfo[39m: [32mRequest: HEAD /en/login[39m
+2026-05-12 01:56:24:5624 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 01:56:25:5625 [31merror[39m: [31mAPI Error Response: 401 - Invalid email or password (INVALID_CREDENTIALS)[39m
+2026-05-12 01:56:47:5647 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 01:56:48:5648 [32minfo[39m: [32mRequest: GET /en/admin/dashboard[39m
+2026-05-12 01:56:54:5654 [32minfo[39m: [32mRequest: HEAD /en/admin/dashboard[39m
+2026-05-12 01:57:12:5712 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 01:57:13:5713 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 01:59:17:5917 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 02:00:07:07 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 02:00:07:07 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 02:00:18:018 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 02:00:18:018 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 02:00:23:023 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 02:01:52:152 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 02:01:52:152 [31merror[39m: [31mAPI Error Response: 500 - Internal Server Error (INTERNAL_ERROR)[39m
+2026-05-12 02:02:07:27 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 02:02:25:225 [32minfo[39m: [32mRequest: POST /api/auth/login[39m
+2026-05-12 02:03:56:356 [32minfo[39m: [32mRequest: GET /api/logs[39m
+2026-05-12 02:03:57:357 [32minfo[39m: [32mAdmin accessed logs API[39m
+2026-05-12 02:05:23:523 [32minfo[39m: [32mRequest: GET /api/logs?level=error[39m
+2026-05-12 02:05:23:523 [32minfo[39m: [32mAdmin accessed logs API[39m
+2026-05-12 02:06:25:625 [32minfo[39m: [32mRequest: GET /api/logs?user_id=1[39m
+2026-05-12 02:06:25:625 [32minfo[39m: [32mAdmin accessed logs API[39m
+2026-05-12 02:06:30:630 [32minfo[39m: [32mRequest: GET /api/logs?user_id=2[39m
+2026-05-12 02:06:30:630 [32minfo[39m: [32mAdmin accessed logs API[39m
+2026-05-12 02:06:50:650 [32minfo[39m: [32mRequest: GET /api/logs?user_id=1&page=2[39m
+2026-05-12 02:06:50:650 [31merror[39m: [31mDatabase error fetching logs: Requested range not satisfiable[39m
+2026-05-12 02:07:25:725 [32minfo[39m: [32mRequest: GET /api/logs?startDate=2026-05-01T00%3A00%3A00Z[39m
+2026-05-12 02:07:25:725 [32minfo[39m: [32mAdmin accessed logs API[39m
+2026-05-12 02:07:54:754 [32minfo[39m: [32mRequest: GET /api/logs?search=login[39m
+2026-05-12 02:07:54:754 [32minfo[39m: [32mAdmin accessed logs API[39m

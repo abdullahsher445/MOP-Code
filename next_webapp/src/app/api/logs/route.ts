@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
     const startDate = url.searchParams.get('startDate');
     const endDate = url.searchParams.get('endDate');
     const search = url.searchParams.get('search'); // Search in message
+    const userId = parseInt(url.searchParams.get('user_id') ?? '');
 
     // Calculate offset
     const offset = (page - 1) * pageSize;
@@ -59,6 +60,10 @@ export async function GET(request: NextRequest) {
 
     if (source) {
       query = query.eq('source', source);
+    }
+
+    if (!Number.isNaN(userId)) {
+      query = query.eq('user_id', userId);
     }
 
     if (startDate) {
@@ -95,7 +100,7 @@ export async function GET(request: NextRequest) {
       source: 'api',
       url: '/api/logs',
       user_id: getAuthUser(request).userId,
-      filters: { page, pageSize, level, source, startDate, endDate, search },
+      filters: { page, pageSize, level, source, startDate, endDate, search, user_id: !Number.isNaN(userId) ? userId : undefined },
     });
 
     return NextResponse.json({

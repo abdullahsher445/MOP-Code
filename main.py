@@ -1,9 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-# from pydantic import BaseModel
+from pydantic import BaseModel
 import uvicorn
-
-from python.preprocess import input_preprocess
 from python.response import LLM_response
 
 app = FastAPI()
@@ -13,12 +11,22 @@ async def health_check():
     return JSONResponse(content={"status":"API Running"} ,status_code=200 )
 
 
-@app.post("/report")
-async def generate_report():
-    inputData = await input_preprocess()
-    res = await LLM_response(inputData)
+class Request(BaseModel):
+    uploaded_image: str
+    streetlight_count: str
+    on:str
+    dim:str
+    off:str
+    details:str
 
-    return res
+@app.post("/report")
+async def generate_report(data: Request):
+
+    try:
+        res = await LLM_response(data)
+        return res
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail="Internal server error. Please try again")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="localhost", port=5000, reload=True)

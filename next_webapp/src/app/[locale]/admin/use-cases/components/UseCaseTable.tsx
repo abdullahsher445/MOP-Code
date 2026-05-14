@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
-
+import ImageHoverPreview from "@/components/admin/ImageHoverPreview";
+import TextHoverPreview from "@/components/admin/TextHoverPreview";
 interface UseCaseRow {
   id: number;
   title: string;
@@ -61,24 +62,23 @@ export default function UseCaseTable({
               data.map((item) => (
                 <tr key={item.id} className="border-b border-black/10">
                   <td className="px-3 py-4">
-                    <img
-                      src={item.cover_img || "/images/category-placeholder.png"}
-                      alt={item.title}
-                      className="h-14 w-14 rounded-lg object-cover border border-gray-300 bg-white"
-                    />
+                  <ImageHoverPreview
+                     src={item.cover_img || "/images/category-placeholder.png"}
+                     alt={item.title}
+                  />
                   </td>
 
                   <td className="px-3 py-4 text-[14px] font-medium text-black">
-                    {item.title}
-                  </td>
+  <TextHoverPreview text={item.title} />
+</td>
 
                   <td className="px-3 py-4 text-[14px] text-[#687280]">
                     {item.category_name}
                   </td>
 
                   <td className="px-3 py-4 text-[14px] text-[#687280] max-w-[280px]">
-                    {item.description || "—"}
-                  </td>
+  <TextHoverPreview text={item.description || "—"} />
+</td>
 
                   <td className="px-3 py-4">
                     <div className="flex items-center gap-2">

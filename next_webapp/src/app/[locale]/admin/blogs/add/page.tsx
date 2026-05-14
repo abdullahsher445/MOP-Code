@@ -3,12 +3,13 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import BlogForm from "../components/BlogsForm";
-
+import AdminToast from "@/components/admin/AdminToast";
 export default function AddBlog() {
   const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const handleSubmit = async (data: any) => {
     setSubmitting(true);
@@ -50,7 +51,14 @@ export default function AddBlog() {
         return;
       }
 
-      router.push(`/${locale}/admin/blogs`);
+      setToast({
+        message: "Blog added successfully.",
+        type: "success",
+      });
+
+      setTimeout(() => {
+        router.push(`/${locale}/admin/blogs`);
+      }, 1000);
     } catch (e) {
       console.error(e);
       setError("Something went wrong. Please try again.");
@@ -74,6 +82,14 @@ export default function AddBlog() {
         )}
         <BlogForm onSubmit={handleSubmit} submitting={submitting} />
       </div>
+
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

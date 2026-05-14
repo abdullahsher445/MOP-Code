@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
-
+import ImageHoverPreview from "@/components/admin/ImageHoverPreview";
+import TextHoverPreview from "@/components/admin/TextHoverPreview";
 function stripHtml(html: string) {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
@@ -40,30 +41,25 @@ export default function BlogTable({
                 <td className="px-3 py-4 text-sm text-[#687280]">{item.id}</td>
 
                 <td className="px-3 py-4">
-                  {item.cover_img ? (
-                    <img
-                      src={item.cover_img}
-                      alt={item.title}
-                      className="h-12 w-16 rounded-lg border bg-white object-cover"
-                    />
-                  ) : (
-                    <div className="h-12 w-16 rounded-lg border bg-gray-100" />
-                  )}
+                <ImageHoverPreview
+                 src={item.cover_img || "/images/category-placeholder.png"}
+                 alt={item.title}
+                />
                 </td>
 
                 <td className="px-3 py-4 text-sm font-medium">{item.title}</td>
 
                 <td className="max-w-[220px] px-3 py-4 text-sm text-[#687280]">
-                  <p className="line-clamp-2">{item.description || "—"}</p>
-                </td>
+  <TextHoverPreview text={item.description || "—"} />
+</td>
 
                 <td className="px-3 py-4 text-sm text-[#687280]">
                   {item.published_date || "—"}
                 </td>
 
                 <td className="max-w-[260px] px-3 py-4 text-sm text-[#687280]">
-                  <p className="line-clamp-2">{stripHtml(item.content)}</p>
-                </td>
+  <TextHoverPreview text={stripHtml(item.content) || "—"} />
+</td>
 
                 <td className="px-3 py-4 text-sm text-[#687280]">
                   {item.created_by_name ?? "—"}

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { use, useState, useEffect, useCallback } from "react";
 import { Plus, Search, Filter } from "lucide-react";
 import BlogTable from "./components/BlogsTable";
+import ConfirmModal from "@/components/admin/ConfirmModal";
+import AdminToast from "@/components/admin/AdminToast";
 
 function authHeaders() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -30,6 +32,8 @@ export default function BlogsPage({ params }: { params: Promise<{ locale: string
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const fetchBlogs = useCallback(async (searchTerm: string, dateFilter: string, currentPage: number) => {
     setLoading(true);
@@ -69,22 +73,34 @@ export default function BlogsPage({ params }: { params: Promise<{ locale: string
     setPage(1);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this blog?")) return;
+  const handleDelete = (id: number) => {
+    setDeleteTarget({ id });
+  };
+  
+  const confirmDeleteBlog = async () => {
+    if (!deleteTarget) return;
+  
     try {
-      const res = await fetch(`/api/blogs/${id}`, {
+      const res = await fetch(`/api/blogs/${deleteTarget.id}`, {
         method: "DELETE",
         headers: authHeaders(),
       });
+  
       const json = await res.json();
+  
       if (json.success) {
+        setToast({ message: "Blog deleted successfully.", type: "success" });
+        setDeleteTarget(null);
         fetchBlogs(search, selectedDate, page);
       } else {
-        alert(json.message || "Failed to delete blog");
+        setToast({
+          message: json.message || "Failed to delete blog.",
+          type: "error",
+        });
       }
     } catch (e) {
       console.error(e);
-      alert("Failed to delete blog");
+      setToast({ message: "Failed to delete blog.", type: "error" });
     }
   };
 
@@ -171,6 +187,24 @@ export default function BlogsPage({ params }: { params: Promise<{ locale: string
             </div>
           )}
         </>
+      )}
+            <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Blog"
+        message="Are you sure you want to delete this blog? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger
+        onConfirm={confirmDeleteBlog}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

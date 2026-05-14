@@ -17,7 +17,7 @@ const intlMiddleware = createMiddleware({
  * Matched against the path with any locale prefix stripped.
  */
 
-const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics", "/api/profile", "/api/categories",  "/api/blogs", "/api/logs"];
+const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics", "/api/profile", "/api/categories",  "/api/blogs", "/api/gallery", "/api/logs"];
 /**
  * Paths that are always publicly accessible and skip every auth check.
  * Matched against the bare path (locale prefix stripped).
@@ -225,6 +225,9 @@ export const config = {
     "/api/blogs",          
     "/api/blogs/:path*",
 
+    // Protected API routes — gallery
+    "/api/gallery",          
+    "/api/gallery/:path*",
     // Protected API routes — logs (admin only)
     "/api/logs",
 

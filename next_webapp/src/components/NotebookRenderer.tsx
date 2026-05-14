@@ -73,10 +73,18 @@ function CellOutput({ output }: { output: NotebookOutput }) {
       );
     }
     if (data["text/html"]) {
+      const rawHtml = join(data["text/html"]);
+      // Strip URL-based src from iframes (e.g. IPython.display.IFrame embeds)
+      // to prevent page-in-page renders like "Use case not found".
+      // data: URIs are preserved so Folium/Plotly maps still render.
+      const safeHtml = rawHtml.replace(
+        /(<iframe\b[^>]*?)\s+src="(?!data:)[^"]*"/gi,
+        "$1"
+      );
       return (
         <div
           className="overflow-x-auto"
-          dangerouslySetInnerHTML={{ __html: join(data["text/html"]) }}
+          dangerouslySetInnerHTML={{ __html: safeHtml }}
         />
       );
     }

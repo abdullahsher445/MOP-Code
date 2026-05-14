@@ -1,8 +1,6 @@
 import winston from 'winston';
-import path from 'path';
 import DatabaseTransport from './databaseTransport';
 
-// Define log levels
 const levels = {
   error: 0,
   warn: 1,
@@ -11,7 +9,6 @@ const levels = {
   debug: 4,
 };
 
-// Define colors for each level
 const colors = {
   error: 'red',
   warn: 'yellow',
@@ -20,10 +17,8 @@ const colors = {
   debug: 'white',
 };
 
-// Add colors to winston
 winston.addColors(colors);
 
-// Define the format for logs
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.colorize({ all: true }),
@@ -32,31 +27,32 @@ const format = winston.format.combine(
   ),
 );
 
-// Define which transports the logger must use
-const transports = [
-  // Console transport for development
+const transports: winston.transport[] = [
   new winston.transports.Console({
     level: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
   }),
-
-  // File transport for all logs
-  new winston.transports.File({
-    filename: path.join(process.cwd(), 'logs', 'error.log'),
-    level: 'error',
-  }),
-
-  // File transport for all logs
-  new winston.transports.File({
-    filename: path.join(process.cwd(), 'logs', 'all.log'),
-  }),
-
-  // Database transport for persistent storage
   new DatabaseTransport({
-    level: 'info', // Store info level and above in database
+    level: 'info',
   }),
 ];
 
-// Create the logger instance
+// File transports need Node.js `path` and `fs` — not available in Edge Runtime.
+// `process.env.NEXT_RUNTIME` is replaced at build time, so webpack dead-code-eliminates
+// this entire block (including the require) from the Edge bundle.
+if (process.env.NEXT_RUNTIME !== 'edge') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const nodePath = require('path') as typeof import('path');
+  transports.push(
+    new winston.transports.File({
+      filename: nodePath.join(process.cwd(), 'logs', 'error.log'),
+      level: 'error',
+    }),
+    new winston.transports.File({
+      filename: nodePath.join(process.cwd(), 'logs', 'all.log'),
+    }),
+  );
+}
+
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   levels,

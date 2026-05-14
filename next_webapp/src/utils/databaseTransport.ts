@@ -37,6 +37,12 @@ class DatabaseTransport extends winston.Transport {
         }
       }
 
+      // Validate ip_address: PostgreSQL inet type rejects non-IP strings like "unknown"
+      const rawIp: string | undefined = info.ip_address;
+      const validIp = rawIp && /^[\d.:a-fA-F]+$/.test(rawIp.split(',')[0].trim())
+        ? rawIp.split(',')[0].trim()
+        : null;
+
       const logEntry: LogEntry = {
         level: info.level,
         message: info.message,
@@ -44,7 +50,7 @@ class DatabaseTransport extends winston.Transport {
         meta,
         source: info.source || 'application',
         user_id: info.user_id,
-        ip_address: info.ip_address,
+        ip_address: validIp,
         user_agent: info.user_agent,
         method: info.method,
         url: info.url,

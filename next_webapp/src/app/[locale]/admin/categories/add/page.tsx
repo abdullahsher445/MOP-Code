@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { FolderPlus, ImagePlus, Save } from "lucide-react";
-
+import AdminToast from "@/components/admin/AdminToast";
 function getAuthHeaders() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user.userId ?? user.id ?? localStorage.getItem("userId") ?? "";
@@ -27,6 +27,7 @@ export default function AddCategoryPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,9 +86,14 @@ export default function AddCategoryPage() {
         return;
       }
 
-      router.push(`/${locale}/admin/categories`);
+      setToast({ message: "Category added successfully.", type: "success" });
+
+setTimeout(() => {
+  router.push(`/${locale}/admin/categories`);
+}, 1000);
     } catch {
       setError("Failed to create category.");
+      setToast({ message: "Failed to add category.", type: "error" });
       setLoading(false);
     }
   }
@@ -215,6 +221,13 @@ export default function AddCategoryPage() {
         </div>
 
       </form>
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

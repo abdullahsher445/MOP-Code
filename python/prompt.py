@@ -1,5 +1,27 @@
+# generate a detailed prompt for AI model analysis
 async def gen_prompt(data):
+    """
+    Generates a comprehensive prompt for GPT-4 Vision to analyze streetlight images.
     
+    This function:
+    - Creates a detailed system prompt with context and instructions
+    - Inserts ML detection results (counts and details)
+    - Specifies output format requirements (JSON)
+    - Guides the AI to produce professional, human-readable reports
+    
+    Args:
+        data (dict): Dictionary containing:
+            - streetlight_count: Total streetlights detected
+            - on: Count of operational lights
+            - dim: Count of dimmed lights
+            - off: Count of faulty/off lights
+            - details: Additional ML detection metadata
+            
+    Returns:
+        str: Formatted prompt string for GPT-4 Vision model
+    """
+    
+    # Create the prompt template with instructions for AI analysis
     prompt = f"""
         You are an AI-powered streetlight monitoring assistant.
 
@@ -28,4 +50,5 @@ async def gen_prompt(data):
         }}
     """
     
+    # Return the formatted prompt
     return prompt

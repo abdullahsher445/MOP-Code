@@ -55,7 +55,31 @@ const Header = () => {
 
 	useEffect(() => {
 		const token = localStorage.getItem("token");
-		setIsLoggedIn(!!token);
+		if (!token) {
+			setIsLoggedIn(false);
+			return;
+		}
+		try {
+			const payloadB64 = token.split(".")[1]
+				.replace(/-/g, "+")
+				.replace(/_/g, "/");
+			const payload = JSON.parse(atob(payloadB64)) as { exp?: number };
+			const isExpired =
+				typeof payload.exp === "number" && Date.now() >= payload.exp * 1000;
+			if (isExpired) {
+				localStorage.removeItem("token");
+				localStorage.removeItem("user");
+				localStorage.removeItem("userId");
+				setIsLoggedIn(false);
+			} else {
+				setIsLoggedIn(true);
+			}
+		} catch {
+			localStorage.removeItem("token");
+			localStorage.removeItem("user");
+			localStorage.removeItem("userId");
+			setIsLoggedIn(false);
+		}
 	}, []);
 
 	useEffect(() => {

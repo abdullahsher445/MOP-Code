@@ -310,7 +310,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { BookOpen, ImagePlus, Save, X } from "lucide-react";
-
+import AdminToast from "@/components/admin/AdminToast";
 function getAuthHeaders() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user.userId ?? user.id ?? "";
@@ -342,6 +342,7 @@ export default function AddUseCasePage() {
   const [notebookContent, setNotebookContent] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const notebookInputRef = useRef<HTMLInputElement>(null);
@@ -459,12 +460,21 @@ export default function AddUseCasePage() {
       const json = await res.json();
 
       if (!json.success) {
-        setError(json.message || json.error || "Failed to create use case.");
+        const msg = json.message || json.error || "Failed to create use case.";
+        setError(msg);
+        setToast({ message: msg, type: "error" });
         setSaving(false);
         return;
       }
-
-      router.push(`/${locale}/admin/use-cases`);
+      
+      setToast({
+        message: "Use case added successfully.",
+        type: "success",
+      });
+      
+      setTimeout(() => {
+        router.push(`/${locale}/admin/use-cases`);
+      }, 1000);
     } catch {
       setError("Failed to create use case.");
       setSaving(false);
@@ -697,6 +707,13 @@ export default function AddUseCasePage() {
           </button>
         </div>
       </form>
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

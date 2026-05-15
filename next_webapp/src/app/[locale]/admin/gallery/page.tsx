@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, X, Upload } from "lucide-react";
-
+import AdminToast from "@/components/admin/AdminToast";
 type GalleryImage = {
   id: number;
   title: string;
@@ -29,12 +29,14 @@ export default function GalleryPage() {
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const handleDelete = () => {
     if (!selectedImage) return;
     setImages((prev) => prev.filter((img) => img.id !== selectedImage.id));
     setShowDeleteConfirm(false);
     setSelectedImage(null);
+    setToast({ message: "Gallery photo deleted successfully.", type: "success" });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,6 +59,7 @@ export default function GalleryPage() {
     setUploadTitle("");
     setUploadFile(null);
     setUploadPreview(null);
+    setToast({ message: "Gallery photo uploaded successfully.", type: "success" });
   };
 
   const closeUpload = () => {
@@ -254,8 +257,16 @@ export default function GalleryPage() {
                 Upload
               </button>
             </div>
-          </div>
+            </div>
         </div>
+      )}
+
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

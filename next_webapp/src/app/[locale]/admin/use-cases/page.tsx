@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Plus, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import UseCaseTable from "./components/UseCaseTable";
+import ConfirmModal from "@/components/admin/ConfirmModal";
+import AdminToast from "@/components/admin/AdminToast";
 
 function getAuthHeaders() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -33,6 +35,8 @@ export default function UseCasesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
+const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Fetch all categories once for the dropdown
   useEffect(() => {
@@ -84,25 +88,39 @@ export default function UseCasesPage() {
     setPage(1);
   }
 
-  async function handleDelete(id: number, title: string) {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  function handleDelete(id: number, title: string) {
+    setDeleteTarget({ id, title });
+  }
+  
+  async function confirmDeleteUseCase() {
+    if (!deleteTarget) return;
+  
     try {
-      const res = await fetch(`/api/usecases/${id}`, {
+      const res = await fetch(`/api/usecases/${deleteTarget.id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
+  
       const json = await res.json();
+  
       if (!json.success) {
-        alert(json.message || json.error || "Failed to delete use case.");
+        setToast({
+          message: json.message || json.error || "Failed to delete use case.",
+          type: "error",
+        });
         return;
       }
+  
+      setToast({ message: "Use case deleted successfully.", type: "success" });
+      setDeleteTarget(null);
+  
       if (usecases.length === 1 && page > 1) {
         setPage((p) => p - 1);
       } else {
         fetchUseCases();
       }
     } catch {
-      alert("Failed to delete use case.");
+      setToast({ message: "Failed to delete use case.", type: "error" });
     }
   }
 
@@ -203,6 +221,24 @@ export default function UseCasesPage() {
             </button>
           </div>
         </div>
+      )}
+            <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Use Case"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger
+        onConfirm={confirmDeleteUseCase}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

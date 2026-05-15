@@ -36,7 +36,10 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
     const allowedTypes = ["text/html", "application/pdf"];
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Only HTML and PDF files are allowed");
+      setErrors((prev: any) => ({
+        ...prev,
+        document: "Only HTML and PDF files are allowed",
+      }));
       return;
     }
 
@@ -47,7 +50,8 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
   };
 
   // drop handler
-  const handleDrop = (e: any) => {
+  const handleDrop = (e: any) => 
+  {
     e.preventDefault();
     if (e.dataTransfer.files?.[0]) {
       handleFile(e.dataTransfer.files[0]);
@@ -209,6 +213,9 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
             </p>
           )}
         </div>
+        {errors.document && (
+          <p className="mt-1 text-sm text-red-500">{errors.document}</p>
+        )}
 
         <input
           type="file"

@@ -12,17 +12,20 @@ import base64
 #start API app
 app = FastAPI()
 
+#store image uploads
 upload_directory = "uploads"
 os.makedirs(upload_directory, exist_ok = True)
 
 app.mount("/uploads", StaticFiles(directory = "uploads"), name = "uploads")
 
+#database path
 db_path = "reports.db"
 
 def init_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
+    #create new database to store CV model analysis and LLM report 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,17 +56,20 @@ async def detect_lights(files: List[UploadFile] = File(...)):
     saved_files = []
     results = []
     
+    #process each individual file 
     for file in files: 
         contents = await file.read() 
 
         file_path = os.path.join(report_path, file.filename)
 
+        #write uploaded image to the disk 
         with open(file_path, "wb") as f: 
             f.write(contents)
 
         #run CV model analysis
         analysis = analyse_image(file_path)
 
+        #store result for a specific image, image = original file name and analysis = CV model analysis 
         results.append({
             "image": file.filename,
             "analysis": analysis, 
@@ -72,6 +78,7 @@ async def detect_lights(files: List[UploadFile] = File(...)):
 
         saved_files.append(file.filename)
     
+    #return final response 
     return {        
         "report_id": report_id, 
         "results": results
@@ -80,19 +87,23 @@ async def detect_lights(files: List[UploadFile] = File(...)):
 #REPORT ENDPOINT FOR LLM 
 @app.post("/report")
 async def generate_report(data: dict): 
-    report_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    #get unique report ids 
+    report_id = data["report_id"]
 
     final_results = []
 
+    #loop through each image 
     for item in data["results"]:
 
         analysis = item["analysis"]
 
+        #send analysis to LLM for report generation 
         llm_result = await llm_reporting({
             "analysis": analysis,
             "uploaded_img": item.get("uploaded_img")
         })
 
+        #store results 
         final_results.append({
             "image": item["image"],
             "analysis": analysis,
@@ -102,6 +113,7 @@ async def generate_report(data: dict):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
+    #store values of analysis 
     cursor.execute("""
         INSERT INTO reports (report_id, timestamp, results)
         VALUES (?, ?, ?)
@@ -114,6 +126,7 @@ async def generate_report(data: dict):
     conn.commit()
     conn.close()
         
+    #send response to the client 
     return {
         "report_id": report_id,
         "results": final_results
@@ -124,7 +137,7 @@ def get_reports():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    #query all reports 
+    #fetch all reports with the most recent first
     cursor.execute("""
         SELECT report_id, timestamp, results
         FROM reports
@@ -134,6 +147,7 @@ def get_reports():
     rows = cursor.fetchall()
     conn.close()
     
+    #convert rows to JSON format for API 
     reports = []
     for row in rows:
         reports.append({ 
@@ -142,4 +156,5 @@ def get_reports():
             "results": json.loads(row[2])
         })
     
+    #return all reports 
     return {"reports": reports}

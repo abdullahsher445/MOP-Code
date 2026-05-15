@@ -569,6 +569,7 @@ elif page == "Reports":
 #REPORTHISTORY
 elif page == "Report History": 
     st.title("Report History")
+    
     data = backend_get_reports() 
     reports = data.get("reports", [])
     
@@ -579,10 +580,11 @@ elif page == "Report History":
             st.subheader(f"Report: {report['report_id']}")
 
             for item in report["results"]:
+                image_name = item["image"]
 
-                image_url = f"http://localhost:8000/uploads/{report['report_id']}/{item['image']}"
+                image_url = f"http://localhost:8000/uploads/{report['report_id']}/{image_name}"
 
-                st.image(image_url)
+                st.image(image_url, width = "stretch")
 
                 st.json(item["analysis"])
 
@@ -590,6 +592,35 @@ elif page == "Report History":
                     st.success(item["report"])
                 else:
                     st.warning("No LLM report available")
+
+
+#ABOUTPAGE
+elif page == "About": 
+    st.title(":blue[About Us]", text_alignment = "center")
+    
+    st.markdown("""
+            Our project team is composed of the following members: 
+            
+            **Syed Hamiz Hassan** 
+            - Computer Vision Modelling 
+            
+                
+            **Savith Mundukotuwa** 
+            - Data Preparation 
+            
+            
+            **Josh Wong** 
+            - User Interface and System Integration
+            
+            
+            **Luke Kankannamge Don** 
+            - LLM Reporting System 
+            
+            
+            **Rahul Sheoran** 
+            - Model Analysis
+             
+            """)
 
 #ABOUTPAGE
 elif page == "About": 

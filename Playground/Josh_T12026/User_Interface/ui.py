@@ -57,7 +57,7 @@ if page == "Homepage":
 elif page == "Detection": 
     st.title("Streetlight Analysis")
     
-    #COLUMNS
+    #columns
     col1, col2 = st.columns([1, 2])
     
     with col1: 
@@ -100,19 +100,21 @@ elif page == "Detection":
     if "analysis_result" in st.session_state:
         result_data = st.session_state["analysis_result"]
 
+        #check data is in correct format, if yes then loop through each analysed image result 
         if isinstance(result_data, dict) and "results" in result_data:
             for result in result_data["results"]:
 
                 analysis = result["analysis"]
                 st.subheader(result["image"])
 
-                #if an image exists 
+                #display uploaded image 
                 if "uploaded_img" in analysis:
                     image_bytes = base64.b64decode(
                         analysis["uploaded_img"]
                     )
                     st.image(image_bytes)
 
+                #summary for each image 
                 st.write(f"Streetlights: {analysis['streetlight_count']}")
                 st.write(f"On: {analysis['on']}")
                 st.write(f"Dim: {analysis['dim']}")
@@ -133,6 +135,7 @@ elif page == "Reports":
             st.warning("No results available. Please run detection analysis first")
         else: 
             with st.spinner("Generating report..."):
+                #retrieve previously stored CV detection results 
                 detection_data = st.session_state['analysis_result']
                 
                 #send to backend 
@@ -141,6 +144,7 @@ elif page == "Reports":
             if isinstance(report, dict) and "results" in report:
                 st.success("Report generated!")
 
+                #display LLM reports for each image 
                 for item in report["results"]: 
                     st.subheader(item["image"])
                     st.write(item["report"])
@@ -152,20 +156,25 @@ elif page == "Reports":
 #REPORTHISTORY
 elif page == "Report History": 
     st.title("Report History")
+    
+    #fetch all stored reports from database
     data = backend_get_reports() 
     reports = data.get("reports", [])
     
     if not reports: 
         st.warning("No reports found. ")
     else: 
+        #loop through all reports 
         for report in reports:
             st.subheader(f"Report: {report['report_id']}")
 
+            #for each image, display the URL, raw CV analysis, and LLM generated report 
             for item in report["results"]:
+                image_name = item["image"]
 
-                image_url = f"http://localhost:8000/uploads/{report['report_id']}/{item['image']}"
+                image_url = f"http://localhost:8000/uploads/{report['report_id']}/{image_name}"
 
-                st.image(image_url)
+                st.image(image_url, width = "stretch")
 
                 st.json(item["analysis"])
 
@@ -175,7 +184,6 @@ elif page == "Report History":
                     st.warning("No LLM report available")
 
 
-    
 #ABOUTPAGE
 elif page == "About": 
     st.title(":blue[About Us]", text_alignment = "center")

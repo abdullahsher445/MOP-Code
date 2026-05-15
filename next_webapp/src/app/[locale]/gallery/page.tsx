@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
 type Category =
   | "Landmarks"
   | "Environment"
@@ -213,8 +214,12 @@ const IMAGES: GalleryImage[] = [
 
 export default function GalleryPage() {
   const t = useTranslations("common");
-  const [lightbox, setLightbox] = useState<GalleryImage | null>(null);
+
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const lightbox =
+    lightboxIndex !== null ? IMAGES[lightboxIndex] : null;
 
   const totalPages = Math.ceil(IMAGES.length / ITEMS_PER_PAGE);
 
@@ -232,7 +237,21 @@ export default function GalleryPage() {
   };
 
   const closeLightbox = useCallback(() => {
-    setLightbox(null);
+    setLightboxIndex(null);
+  }, []);
+
+  const goToPreviousImage = useCallback(() => {
+    setLightboxIndex((prev) => {
+      if (prev === null) return prev;
+      return prev === 0 ? IMAGES.length - 1 : prev - 1;
+    });
+  }, []);
+
+  const goToNextImage = useCallback(() => {
+    setLightboxIndex((prev) => {
+      if (prev === null) return prev;
+      return prev === IMAGES.length - 1 ? 0 : prev + 1;
+    });
   }, []);
 
   useEffect(() => {
@@ -242,6 +261,14 @@ export default function GalleryPage() {
       if (e.key === "Escape") {
         closeLightbox();
       }
+
+      if (e.key === "ArrowLeft") {
+        goToPreviousImage();
+      }
+
+      if (e.key === "ArrowRight") {
+        goToNextImage();
+      }
     };
 
     window.addEventListener("keydown", onKey);
@@ -249,7 +276,7 @@ export default function GalleryPage() {
     return () => {
       window.removeEventListener("keydown", onKey);
     };
-  }, [lightbox, closeLightbox]);
+  }, [lightbox, closeLightbox, goToPreviousImage, goToNextImage]);
 
   useEffect(() => {
     document.body.style.overflow = lightbox ? "hidden" : "";
@@ -332,7 +359,11 @@ export default function GalleryPage() {
                 {paginatedImages.map((img, idx) => (
                   <button
                     key={`${img.src}-${idx}`}
-                    onClick={() => setLightbox(img)}
+                    onClick={() =>
+                      setLightboxIndex(
+                        (currentPage - 1) * ITEMS_PER_PAGE + idx
+                      )
+                    }
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.boxShadow = `0 0 0 2px ${img.glowColor}, 0 0 14px 4px ${img.glowColor}44`)
                     }
@@ -379,29 +410,29 @@ export default function GalleryPage() {
                 ))}
               </div>
 
-             {totalPages > 1 && (
-  <div className="mt-12 flex items-center justify-center gap-3">
-    <button
-      onClick={goToPreviousPage}
-      disabled={currentPage === 1}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
-    >
-      <ChevronLeft size={18} />
-    </button>
+              {totalPages > 1 && (
+                <div className="mt-12 flex items-center justify-center gap-3">
+                  <button
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
 
-    <span className="rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
-      Page {currentPage} of {totalPages}
-    </span>
+                  <span className="rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                    Page {currentPage} of {totalPages}
+                  </span>
 
-    <button
-      onClick={goToNextPage}
-      disabled={currentPage === totalPages}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
-    >
-      <ChevronRight size={18} />
-    </button>
-  </div>
-)}
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex min-h-[250px] items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center dark:border-gray-700 dark:bg-[#242424]">
@@ -424,7 +455,7 @@ export default function GalleryPage() {
           >
             <button
               onClick={closeLightbox}
-              className="absolute top-4 right-4 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white"
+              className="absolute top-4 right-4 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white"
               aria-label="Close"
             >
               <svg
@@ -440,6 +471,28 @@ export default function GalleryPage() {
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPreviousImage();
+              }}
+              className="absolute left-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={24} />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNextImage();
+              }}
+              className="absolute right-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white"
+              aria-label="Next image"
+            >
+              <ChevronRight size={24} />
             </button>
 
             <div
@@ -469,6 +522,12 @@ export default function GalleryPage() {
                 <span className="inline-block mt-2 px-3 py-0.5 text-xs font-semibold uppercase tracking-wider text-green-400 bg-green-900/40 rounded-full">
                   {t(`cat_${lightbox.category.toLowerCase()}`)}
                 </span>
+
+                {lightboxIndex !== null && (
+                  <p className="mt-2 text-xs text-gray-400">
+                    {lightboxIndex + 1} / {IMAGES.length}
+                  </p>
+                )}
               </div>
             </div>
           </div>

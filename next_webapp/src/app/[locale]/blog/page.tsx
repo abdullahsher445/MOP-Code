@@ -94,13 +94,14 @@
 // }
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlogCard from "@/components/BlogCard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 const PAGE_SIZE = 9;
+type SearchMode = "title" | "content";
 
 interface Blog {
   id: number;
@@ -116,14 +117,21 @@ export default function BlogListingPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchMode, setSearchMode] = useState<SearchMode>("title");
+  const [activeSearch, setActiveSearch] = useState<{ term: string; mode: SearchMode }>({ term: "", mode: "title" });
 
-  const fetchBlogs = useCallback(async (currentPage: number) => {
+  const fetchBlogs = useCallback(async (currentPage: number, term: string, mode: SearchMode) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         page: String(currentPage),
         pageSize: String(PAGE_SIZE),
       });
+      if (term) {
+        params.set("search", term);
+        params.set("search_by", mode);
+      }
       const res = await fetch(`/api/home/blogs?${params}`);
       const json = await res.json();
       if (json.success) {
@@ -139,8 +147,33 @@ export default function BlogListingPage() {
   }, []);
 
   useEffect(() => {
-    fetchBlogs(page);
-  }, [page, fetchBlogs]);
+    fetchBlogs(page, activeSearch.term, activeSearch.mode);
+  }, [page, activeSearch, fetchBlogs]);
+
+  // Debounce: update activeSearch 350ms after typing stops (skip first render)
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    const timer = setTimeout(() => {
+      setPage(1);
+      setActiveSearch({ term: searchTerm, mode: searchMode });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm, searchMode]);
+
+  // Submit: bypass debounce, fire immediately
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    setActiveSearch({ term: searchTerm, mode: searchMode });
+  };
+
+  const handleReset = () => {
+    setSearchTerm("");
+    setSearchMode("title");
+    setPage(1);
+    setActiveSearch({ term: "", mode: "title" });
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -186,6 +219,51 @@ export default function BlogListingPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          {/* Search bar */}
+          <div className="mb-8 rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-[#242424] sm:p-5">
+            <form onSubmit={handleSearch} className="flex flex-col gap-4 lg:flex-row lg:items-center">
+              <div className="relative flex-1">
+                <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="search"
+                  placeholder="Search blogs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-14 w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-4 text-sm outline-none transition focus:border-green-500 focus:bg-white dark:border-gray-600 dark:bg-[#1C1C1C] dark:text-white dark:focus:bg-[#1C1C1C]"
+                />
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <select
+                  value={searchMode}
+                  onChange={(e) => setSearchMode(e.target.value as SearchMode)}
+                  className="h-14 min-w-[200px] rounded-2xl border border-gray-200 bg-white px-4 text-sm outline-none transition focus:border-green-500 dark:border-gray-600 dark:bg-[#242424] dark:text-white"
+                >
+                  <option value="title">Search by title</option>
+                  <option value="content">Search by content</option>
+                </select>
+                <button
+                  type="submit"
+                  className="h-14 rounded-2xl bg-green-600 px-6 text-sm font-semibold text-white transition hover:bg-green-700"
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="h-14 rounded-2xl border border-gray-200 bg-white px-6 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-[#242424] dark:text-white dark:hover:bg-[#2e2e2e]"
+                >
+                  Reset
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {activeSearch.term && !loading && (
+            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+              {total} result{total !== 1 ? "s" : ""} for &ldquo;{activeSearch.term}&rdquo;
+            </p>
+          )}
+
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-green-500 border-t-transparent" />
@@ -234,7 +312,7 @@ export default function BlogListingPage() {
           ) : (
             <div className="flex min-h-[250px] items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center dark:border-gray-700 dark:bg-[#242424]">
               <p className="text-base font-medium text-gray-500 dark:text-gray-400">
-                No data available at the moment
+                {activeSearch.term ? `No blogs found for "${activeSearch.term}"` : "No data available at the moment"}
               </p>
             </div>
           )}

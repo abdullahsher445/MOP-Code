@@ -6,12 +6,26 @@ export type LocalSearchMode = "title" | "tag" | "content";
 
 interface SearchBarProps {
   onSearch: (term: string, mode: LocalSearchMode, category: CATEGORY) => void;
+  initialTerm?: string;
+  initialMode?: LocalSearchMode;
+  onTermChange?: (term: string, mode: LocalSearchMode) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
-  const [term, setTerm] = useState("");
-  const [mode, setMode] = useState<LocalSearchMode>("title");
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialTerm = "", initialMode = "title", onTermChange }) => {
+  const [term, setTerm] = useState(initialTerm);
+  const [mode, setMode] = useState<LocalSearchMode>(initialMode);
   const [category] = useState<CATEGORY>(CATEGORY.ALL);
+
+  const handleTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTerm(e.target.value);
+    onTermChange?.(e.target.value, mode);
+  };
+
+  const handleModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMode = e.target.value as LocalSearchMode;
+    setMode(newMode);
+    onTermChange?.(term, newMode);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +36,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
     setTerm("");
     setMode("title");
     onSearch("", "title", CATEGORY.ALL);
+    onTermChange?.("", "title");
   };
 
   return (
@@ -39,7 +54,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             type="search"
             placeholder="Search use cases"
             value={term}
-            onChange={(e) => setTerm(e.target.value)}
+            onChange={handleTermChange}
             className="h-14 w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-4 text-sm outline-none transition focus:border-green-500 focus:bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:bg-gray-700"
           />
         </div>
@@ -47,7 +62,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
         <div className="flex flex-col gap-3 sm:flex-row">
           <select
             value={mode}
-            onChange={(e) => setMode(e.target.value as LocalSearchMode)}
+            onChange={handleModeChange}
             className="h-14 min-w-[210px] rounded-2xl border border-gray-200 bg-white px-4 text-sm outline-none transition focus:border-green-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           >
             <option value="title">Search by title</option>

@@ -135,7 +135,8 @@
 // export default UseCases;
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import SearchBar, { LocalSearchMode } from "./searchbar";
@@ -146,14 +147,23 @@ import Tooglebutton from "../Tooglebutton/Tooglebutton";
 const PAGE_SIZE = 9;
 
 const UseCases: React.FC = () => {
+	const searchParams = useSearchParams();
 	const [darkMode, setDarkMode] = useState(false);
 	const [usecases, setUsecases] = useState<CaseStudy[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [total, setTotal] = useState(0);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [searchMode, setSearchMode] = useState<LocalSearchMode>("title");
+
+	const initTerm = searchParams.get("tag_name") ?? searchParams.get("search") ?? "";
+	const initMode: LocalSearchMode = searchParams.get("tag_name")
+		? "tag"
+		: (searchParams.get("search_by") as LocalSearchMode | null) ?? "title";
+
+	const [searchTerm, setSearchTerm] = useState<string>(initTerm);
+	const [searchMode, setSearchMode] = useState<LocalSearchMode>(initMode);
+	const [debouncedTerm, setDebouncedTerm] = useState<string>(initTerm);
+	const [debouncedMode, setDebouncedMode] = useState<LocalSearchMode>(initMode);
 
 	useEffect(() => {
 		const storedTheme = localStorage.getItem("theme");
@@ -218,18 +228,37 @@ const UseCases: React.FC = () => {
 		[]
 	);
 
+	// Debounce: update fetch trigger 350ms after typing stops
 	useEffect(() => {
-		fetchUsecases(page, searchTerm, searchMode);
-	}, [page, searchTerm, searchMode, fetchUsecases]);
+		const timer = setTimeout(() => {
+			setDebouncedTerm(searchTerm);
+			setDebouncedMode(searchMode);
+			setPage(1);
+		}, 350);
+		return () => clearTimeout(timer);
+	}, [searchTerm, searchMode]);
 
+	useEffect(() => {
+		fetchUsecases(page, debouncedTerm, debouncedMode);
+	}, [page, debouncedTerm, debouncedMode, fetchUsecases]);
+
+	// Submit: bypass debounce, fire immediately
 	const handleSearch = useCallback(
 		(term: string, mode: LocalSearchMode, _cat: CATEGORY) => {
 			setSearchTerm(term);
 			setSearchMode(mode);
+			setDebouncedTerm(term);
+			setDebouncedMode(mode);
 			setPage(1);
 		},
 		[]
 	);
+
+	// Live typing callback from SearchBar
+	const handleTermChange = useCallback((term: string, mode: LocalSearchMode) => {
+		setSearchTerm(term);
+		setSearchMode(mode);
+	}, []);
 
 	return (
 		<div className="flex min-h-screen flex-col bg-[#f7f9fb] text-black transition-colors duration-200 dark:bg-gray-900 dark:text-white">
@@ -277,7 +306,12 @@ const UseCases: React.FC = () => {
 				</section>
 
 				<div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
-					<SearchBar onSearch={handleSearch} />
+					<SearchBar
+						onSearch={handleSearch}
+						onTermChange={handleTermChange}
+						initialTerm={initTerm}
+						initialMode={initMode}
+					/>
 
 					{loading ? (
 						<div className="flex justify-center py-20">
@@ -304,4 +338,10 @@ const UseCases: React.FC = () => {
 	);
 };
 
-export default UseCases;
+export default function UseCasesPage() {
+	return (
+		<Suspense>
+			<UseCases />
+		</Suspense>
+	);
+}

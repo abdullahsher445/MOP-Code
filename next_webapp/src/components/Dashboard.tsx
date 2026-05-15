@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import secondimage from "../../public/img/second_image.png";
 import HeroSlider, { HERO_SLIDES } from "@/components/HeroSlider";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { CaseStudy, CATEGORY, SEARCH_MODE, SearchParams } from "@/app/types";
 import { useEffect, useState, useRef } from "react";
 import {
@@ -778,6 +778,7 @@ const Dashboard = () => {
 
   //edits for use case studies
   const router = useRouter();
+  const locale = useLocale();
 
 	const t = useTranslations("common");
 	const t_hero = useTranslations("hero");
@@ -834,6 +835,46 @@ const Dashboard = () => {
 	useEffect(() => {
 		handleSearch("", SEARCH_MODE.TITLE, CATEGORY.ALL);
 	}, []);
+
+	// Live hero search: debounce 350ms, fetch top 5 matching usecases for dropdown
+	useEffect(() => {
+		if (!searchTerm.trim()) {
+			setFilteredCaseStudies([]);
+			setShowSearchResults(false);
+			return;
+		}
+		const timer = setTimeout(async () => {
+			setIsSearching(true);
+			try {
+				const params = new URLSearchParams({ pageSize: "5" });
+				if (searchMode === SEARCH_MODE.TAG) {
+					params.set("tag_name", searchTerm.trim());
+				} else {
+					params.set("search", searchTerm.trim());
+					params.set("search_by", searchMode);
+				}
+				const res = await fetch(`/api/usecases?${params}`);
+				const json = await res.json();
+				if (json.success) {
+					setFilteredCaseStudies(
+						(json.data || []).map((u: any) => ({
+							id: u.id,
+							title: u.title,
+							description: u.description ?? "",
+							tags: (u.tags || []).map((t: any) => (typeof t === "string" ? t : t.name)),
+							htmlFile: "",
+						}))
+					);
+					setShowSearchResults(true);
+				}
+			} catch {
+				// silently ignore
+			} finally {
+				setIsSearching(false);
+			}
+		}, 350);
+		return () => clearTimeout(timer);
+	}, [searchTerm, searchMode]);
 
 	useEffect(() => {
 		fetch("/api/usecases/recent")
@@ -923,8 +964,8 @@ const Dashboard = () => {
 	};
 
 	const handleCaseStudyClick = (study: CaseStudy) => {
-		setSelectedCaseStudy(study);
 		setShowSearchResults(false);
+		router.push(`/${locale}/usecases?search=${encodeURIComponent(study.title)}&search_by=title`);
 	};
 
 	const handleBack = () => {
@@ -939,8 +980,15 @@ const Dashboard = () => {
 
 	const handleSearchSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		handleSearch(searchTerm, searchMode, category);
-		setShowSearchResults(true);
+		if (!searchTerm.trim()) return;
+		const params = new URLSearchParams();
+		if (searchMode === SEARCH_MODE.TAG) {
+			params.set("tag_name", searchTerm.trim());
+		} else {
+			params.set("search", searchTerm.trim());
+			params.set("search_by", searchMode);
+		}
+		router.push(`/${locale}/usecases?${params.toString()}`);
 	};
 
 	const clearSearch = () => {
@@ -1008,7 +1056,10 @@ const Dashboard = () => {
 							<p className="hero-subtitle">{t_hero("hero-sub")}</p>
 
 							<div className="hero-buttons">
-								<button className="hero-button primary">
+								<button
+									className="hero-button primary"
+									onClick={() => router.push(`/${locale}/usecases`)}
+								>
 									{t_hero("exploreCaseStudies")} <ArrowRight size={20} />
 								</button>
 								<a
@@ -1037,7 +1088,6 @@ const Dashboard = () => {
 										className="search-input"
 										value={searchTerm}
 										onChange={(e) => setSearchTerm(e.target.value)}
-										onFocus={() => setShowSearchResults(true)}
 									/>
 									{searchTerm && (
 										<button
@@ -1081,7 +1131,7 @@ const Dashboard = () => {
 													className="search-result-item"
 													onClick={() => handleCaseStudyClick(study)}
 												>
-													<h4>{study.name}</h4>
+													<h4>{study.title}</h4>
 													<p>
 														{study.description.split(" ").length > 30
 															? `${study.description

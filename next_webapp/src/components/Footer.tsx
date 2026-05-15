@@ -288,6 +288,33 @@ const Footer = () => {
           box-shadow: 0 0 8px rgba(255,255,255,0.7), 0 0 16px rgba(255,255,255,0.3);
         }
 
+        /* Tablet / small laptop: shrink chrome so four columns fit without clipping */
+        @media (min-width: 768px) and (max-width: 1279px) {
+          .footer-main-grid .logo-card {
+            padding: 12px 16px;
+          }
+          .footer-main-grid .section-heading {
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+          }
+          .footer-main-grid .quick-link {
+            font-size: 0.82rem;
+          }
+          .footer-main-grid .social-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+          }
+          .footer-col-links.footer-tight-pad {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+          .footer-col-connect.footer-tight-pad {
+            padding-right: 12px !important;
+          }
+        }
+
+        /* Phone only: single column + centered; from md (tablet) up = same as desktop */
         @media (max-width: 767px) {
           .footer-col-links {
             border-left: none !important;
@@ -389,7 +416,7 @@ const Footer = () => {
 				/>
 
 				<div
-					className="relative z-20 mx-auto px-6 pb-6 pt-14 md:px-8 lg:px-20"
+					className="relative z-20 mx-auto min-w-0 max-w-full px-4 pb-6 pt-14 sm:px-6 md:px-6 lg:px-12 xl:px-20"
 					style={{
 						maxWidth: "1200px",
 						transform: `translateX(${parallaxOffset.x * 0.3}px) translateY(${
@@ -398,30 +425,28 @@ const Footer = () => {
 						transition: "transform 0.1s linear",
 					}}
 				>
-					<div className="grid grid-cols-1 items-start gap-10 md:grid-cols-2 xl:grid-cols-4">
-						<div className="flex flex-col items-center gap-5 md:items-start">
-							<Link href="/" className="logo-card" aria-label="Go to home page">
+					<div className="footer-main-grid grid min-w-0 grid-cols-1 items-center gap-10 md:grid-cols-4 md:items-start md:gap-4 lg:gap-8 xl:gap-10">
+						<div className="flex min-w-0 flex-col items-center gap-5 md:items-start">
+							<Link
+								href="/"
+								className="logo-card max-w-full shrink-0"
+								aria-label="Go to home page"
+							>
 								<img
 									src="/img/new-logo-white.png"
 									alt="Melbourne Open Playground logo"
-									style={{
-										height: "79px",
-										position: "relative",
-										zIndex: 1,
-									}}
+									className="relative z-[1] h-16 w-auto md:h-[64px] lg:h-[72px] xl:h-[79px]"
 								/>
 								<span className="shimmer-sweep" aria-hidden="true" />
 							</Link>
 
 							<p
 								style={{
-									fontSize: "0.9rem",
 									color: "rgba(255,255,255,0.92)",
 									lineHeight: "1.7",
-									maxWidth: "220px",
 									textShadow: "0 1px 4px rgba(0,0,0,0.25)",
 								}}
-								className="text-center md:text-left"
+								className="max-w-[220px] text-center text-[0.9rem] md:max-w-none md:text-left md:text-[0.85rem] lg:text-[0.9rem]"
 							>
 								Exploring Melbourne&#39;s open data to build smarter
 								communities.
@@ -429,7 +454,7 @@ const Footer = () => {
 						</div>
 
 						<div
-							className="footer-col-links flex flex-col items-center gap-4 md:items-start"
+							className="footer-col-links footer-tight-pad flex min-w-0 flex-col items-center gap-4 md:items-start"
 							style={{
 								borderLeft: "1px solid rgba(255,255,255,0.3)",
 								borderRight: "1px solid rgba(255,255,255,0.3)",
@@ -437,7 +462,9 @@ const Footer = () => {
 								paddingRight: "28px",
 							}}
 						>
-							<p className="section-heading">Quick Links</p>
+							<p className="section-heading text-center md:text-left">
+								Quick Links
+							</p>
 							<div className="heading-bar" />
 
 							<div className="flex w-full flex-col items-center gap-3 md:items-start">
@@ -453,21 +480,21 @@ const Footer = () => {
 						</div>
 
 						<div
-							className="footer-col-connect flex flex-col items-center gap-4 md:items-start"
+							className="footer-col-connect footer-tight-pad flex min-w-0 flex-col items-center gap-4 md:items-start"
 							style={{
 								borderRight: "1px solid rgba(255,255,255,0.3)",
 								paddingRight: "28px",
 							}}
 						>
-							<p className="section-heading">Connect</p>
+							<p className="section-heading text-center md:text-left">Connect</p>
 							<div className="heading-bar" />
 
 							<a
 								href="https://data.melbourne.vic.gov.au/pages/home/"
 								target="_blank"
 								rel="noopener noreferrer"
+								className="flex min-w-0 flex-wrap justify-center break-words text-center md:justify-start md:text-left md:text-[0.82rem] lg:text-[0.95rem]"
 								style={{
-									fontSize: "0.95rem",
 									color: "rgba(255,255,255,0.92)",
 									textDecoration: "none",
 									transition: "color 0.2s ease, text-shadow 0.2s ease",
@@ -491,8 +518,9 @@ const Footer = () => {
 								<span style={{ fontSize: "0.8rem" }}>↗</span>
 							</a>
 
-							<div>
+							<div className="flex flex-col items-center md:items-start">
 								<p
+									className="text-center md:text-left"
 									style={{
 										fontSize: "0.78rem",
 										color: "rgba(255,255,255,0.85)",
@@ -506,7 +534,10 @@ const Footer = () => {
 									Follow us
 								</p>
 
-								<div style={{ display: "flex", gap: "12px" }}>
+								<div
+									className="justify-center md:justify-start"
+									style={{ display: "flex", gap: "12px" }}
+								>
 									{socialIcons.map(({ Icon, label, path }) => (
 										<a
 											key={label}
@@ -527,26 +558,26 @@ const Footer = () => {
 							</div>
 						</div>
 
-						<div className="flex flex-col items-center gap-4 md:items-start">
-							<p className="section-heading">Newsletter</p>
+						<div className="flex min-w-0 flex-col items-center gap-4 md:items-start">
+							<p className="section-heading text-center md:text-left">
+								Newsletter
+							</p>
 							<div className="heading-bar" />
 
 							<p
 								style={{
-									fontSize: "0.95rem",
 									color: "rgba(255,255,255,0.92)",
 									lineHeight: "1.7",
-									maxWidth: "220px",
 									textShadow: "0 1px 4px rgba(0,0,0,0.25)",
 								}}
-								className="text-center md:text-left"
+								className="max-w-[220px] text-center text-[0.95rem] md:max-w-none md:w-full md:text-left md:text-[0.85rem] lg:text-[0.95rem]"
 							>
 								Get Melbourne open-data updates first.
 							</p>
 
-							<div className="flex w-full flex-col gap-1 xl:min-w-[280px]">
+							<div className="mx-auto flex w-full max-w-[240px] flex-col gap-1 sm:max-w-[280px] md:mx-0 md:max-w-none md:min-w-0">
 								<form
-									className="flex w-full flex-col gap-2 sm:flex-row"
+									className="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-2 md:gap-1.5"
 									onSubmit={(e) => {
 										e.preventDefault();
 
@@ -594,9 +625,8 @@ const Footer = () => {
 										aria-describedby={
 											newsletterError ? "footer-newsletter-error" : undefined
 										}
-										className="newsletter-email-input min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] outline-none transition placeholder:text-white placeholder:opacity-100"
+										className="newsletter-email-input min-w-0 w-full max-w-full flex-1 rounded-lg px-2 py-1.5 text-[0.85rem] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] outline-none transition placeholder:text-white placeholder:opacity-100 sm:px-2.5 md:px-1.5 md:py-1 md:text-[0.78rem] lg:px-2.5 lg:py-1.5 lg:text-[0.85rem]"
 										style={{
-											fontSize: "0.85rem",
 											background: "rgba(255,255,255,0.1)",
 											border: newsletterError
 												? "1px solid rgba(252, 165, 165, 0.95)"
@@ -606,7 +636,7 @@ const Footer = () => {
 
 									<button
 										type="submit"
-										className="whitespace-nowrap rounded-lg px-3 py-1.5 font-semibold transition hover:opacity-95 active:scale-[0.98]"
+										className="shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[0.85rem] font-semibold transition hover:opacity-95 active:scale-[0.98] max-sm:w-auto max-sm:self-center max-sm:px-2.5 sm:px-2.5 md:px-2 md:py-1 md:text-[0.78rem] lg:px-3 lg:py-1.5 lg:text-[0.85rem]"
 										onMouseEnter={(e) => {
 											e.currentTarget.style.background =
 												"rgba(255,255,255,0.92)";
@@ -622,7 +652,6 @@ const Footer = () => {
 												"1px solid rgba(167, 243, 208, 0.5)";
 										}}
 										style={{
-											fontSize: "0.85rem",
 											background: "rgba(110, 231, 183, 0.24)",
 											color: "#f0fdf4",
 											border: "1px solid rgba(167, 243, 208, 0.5)",

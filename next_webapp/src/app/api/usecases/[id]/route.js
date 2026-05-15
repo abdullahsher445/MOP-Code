@@ -52,9 +52,15 @@ export async function GET(request, { params }) {
       );
     }
 
+    const url = new URL(request.url);
+    const includeContent = url.searchParams.get('include_content') === 'true';
+    const fields = includeContent
+      ? '*'
+      : 'id, title, description, cover_img, category_id, created_by, created_at, updated_at';
+
     const { data, error } = await supabase
       .from('usecases')
-      .select('*')
+      .select(fields)
       .eq('id', parseInt(id))
       .single();
 
@@ -72,9 +78,30 @@ export async function GET(request, { params }) {
       );
     }
 
+    let createdBy = null;
+    if (data.created_by) {
+      const { data: userDetails } = await supabase
+        .from('user_details')
+        .select('first_name, last_name')
+        .eq('user_id', data.created_by)
+        .single();
+
+      if (userDetails?.first_name || userDetails?.last_name) {
+        createdBy = `${userDetails.first_name ?? ''} ${userDetails.last_name ?? ''}`.trim();
+      } else {
+        // fallback to email from user table
+        const { data: userData } = await supabase
+          .from('user')
+          .select('email')
+          .eq('id', data.created_by)
+          .single();
+        if (userData?.email) createdBy = userData.email;
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      data: data
+      data: { ...data, created_by_name: createdBy },
     });
   } catch (error) {
     console.error('Error fetching use case:', error);
@@ -122,33 +149,87 @@ export async function PUT(request, { params }) {
     if (body.description !== undefined) updates.description = body.description;
     if (body.cover_img !== undefined) updates.cover_img = body.cover_img;
     if (body.category_id !== undefined) updates.category_id = body.category_id;
+    if (body.content !== undefined) updates.content = body.content;
 
-    if (Object.keys(updates).length === 0) {
+    const hasTags = Array.isArray(body.tags);
+
+    if (Object.keys(updates).length === 0 && !hasTags) {
       return NextResponse.json(
         { success: false, error: 'No fields provided to update' },
         { status: 400 }
       );
     }
 
-    const { data, error } = await supabase
-      .from('usecases')
-      .update(updates)
-      .eq('id', parseInt(id))
-      .select()
-      .single();
+    let data = null;
 
-    if (error) {
-      if (error.code === 'PGRST116') {
+    if (Object.keys(updates).length > 0) {
+      const { data: updatedRow, error } = await supabase
+        .from('usecases')
+        .update(updates)
+        .eq('id', parseInt(id))
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return NextResponse.json(
+            { success: false, error: 'Use case not found' },
+            { status: 404 }
+          );
+        }
+        console.error('[PUT /api/usecases] update error:', error);
         return NextResponse.json(
-          { success: false, error: 'Use case not found' },
-          { status: 404 }
+          { success: false, error: 'Failed to update use case' },
+          { status: 500 }
         );
       }
-      console.error('[PUT /api/usecases] update error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Failed to update use case' },
-        { status: 500 }
-      );
+
+      data = updatedRow;
+    }
+
+    if (hasTags) {
+      // Remove all existing tags for this use case
+      await supabase
+        .from('usecase_tags')
+        .delete()
+        .eq('usecase_id', parseInt(id));
+
+      // Re-insert each tag (find or create, then link)
+      for (const raw of body.tags) {
+        if (typeof raw !== 'string' || raw.trim().length === 0) continue;
+
+        const name = raw.trim();
+        const slug = name.toLowerCase().replace(/\s+/g, '-');
+
+        let tag;
+        const { data: insertedTag, error: tagInsertError } = await supabase
+          .from('tags')
+          .insert({ name, slug })
+          .select('id, name, slug')
+          .single();
+
+        if (tagInsertError) {
+          if (tagInsertError.code === '23505') {
+            const { data: existingTag } = await supabase
+              .from('tags')
+              .select('id, name, slug')
+              .eq('slug', slug)
+              .single();
+            tag = existingTag;
+          } else {
+            console.error('[PUT /api/usecases] tag insert error:', tagInsertError);
+            continue;
+          }
+        } else {
+          tag = insertedTag;
+        }
+
+        if (tag) {
+          await supabase
+            .from('usecase_tags')
+            .insert({ usecase_id: parseInt(id), tag_id: tag.id });
+        }
+      }
     }
 
     return NextResponse.json({
@@ -190,6 +271,12 @@ export async function DELETE(request, { params }) {
         { status: 404 }
       );
     }
+
+    // Remove associated tags first to avoid FK violation
+    await supabase
+      .from('usecase_tags')
+      .delete()
+      .eq('usecase_id', parseInt(id));
 
     const { error } = await supabase
       .from('usecases')

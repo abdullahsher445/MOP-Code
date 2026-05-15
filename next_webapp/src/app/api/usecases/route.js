@@ -11,7 +11,7 @@ export async function POST(request) {
       return errorResponse("Invalid JSON body", 400, "INVALID_JSON");
     }
 
-    const { title, description, cover_img, category_id, created_by, tags } =
+    const { title, description, cover_img, category_id, created_by, tags, content } =
       body;
 
     if (typeof title !== "string" || title.trim().length === 0) {
@@ -29,6 +29,7 @@ export async function POST(request) {
         cover_img: cover_img ?? null,
         category_id: category_id ?? null,
         created_by,
+        content: content ?? null,
       })
       .select()
       .single();
@@ -165,10 +166,10 @@ export async function GET(request) {
 
     // Validate search_by
     const searchBy = url.searchParams.get("search_by")?.trim() || "all";
-    const validSearchBy = ["title", "description", "all"];
+    const validSearchBy = ["title", "description", "content", "all"];
     if (!validSearchBy.includes(searchBy)) {
       return errorResponse(
-        "search_by must be one of: title, description, all",
+        "search_by must be one of: title, description, content, all",
         400,
         "INVALID_SEARCH_BY",
       );
@@ -184,15 +185,21 @@ export async function GET(request) {
       })
       .order("created_at", { ascending: false });
 
-    // Keyword search — narrows to title, description, or both based on search_by
+    // Keyword search
     if (keyword) {
       if (searchBy === "title") {
         query = query.ilike("title", `%${keyword}%`);
       } else if (searchBy === "description") {
         query = query.ilike("description", `%${keyword}%`);
-      } else {
+      } else if (searchBy === "content") {
+        // search description + notebook content (ipynb JSON contains raw cell text)
         query = query.or(
-          `title.ilike.%${keyword}%,description.ilike.%${keyword}%`,
+          `description.ilike.%${keyword}%,content.ilike.%${keyword}%`,
+        );
+      } else {
+        // "all" — search title, description, and notebook content
+        query = query.or(
+          `title.ilike.%${keyword}%,description.ilike.%${keyword}%,content.ilike.%${keyword}%`,
         );
       }
     }

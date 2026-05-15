@@ -1,21 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
-
-const CATEGORIES = [
-  "All",
-  "Landmarks",
-  "Environment",
-  "Technology",
-  "Sustainability",
-  "Society",
-] as const;
-
-type Category = (typeof CATEGORIES)[number];
+import { ChevronLeft, ChevronRight } from "lucide-react";
+type Category =
+  | "Landmarks"
+  | "Environment"
+  | "Technology"
+  | "Sustainability"
+  | "Society";
 
 const GLOW_COLORS = [
   "#22c55e",
@@ -26,6 +22,8 @@ const GLOW_COLORS = [
   "#14b8a6",
   "#eab308",
 ] as const;
+
+const ITEMS_PER_PAGE = 21;
 
 interface GalleryImage {
   src: string;
@@ -109,120 +107,105 @@ const IMAGES: GalleryImage[] = [
   {
     src: "/img/climate_change.jpg",
     titleKey: "img_climate_change_impact_title",
-    caption:
-      "Visualising Melbourne's changing climate patterns over time",
+    caption: "Visualising Melbourne's changing climate patterns over time",
     category: "Environment",
     glowColor: GLOW_COLORS[1],
   },
   {
     src: "/img/tree_planting.jpeg",
     titleKey: "img_urban_tree_planting_title",
-    caption:
-      "Greening programs expanding the city's tree canopy cover",
+    caption: "Greening programs expanding the city's tree canopy cover",
     category: "Environment",
     glowColor: GLOW_COLORS[2],
   },
   {
     src: "/img/unique_insects.jpg",
     titleKey: "img_urban_insect_life_title",
-    caption:
-      "Documenting Melbourne's unique urban insect populations",
+    caption: "Documenting Melbourne's unique urban insect populations",
     category: "Environment",
     glowColor: GLOW_COLORS[3],
   },
   {
     src: "/img/urban_climate.jpg",
     titleKey: "img_urban_microclimate_title",
-    caption:
-      "Monitoring microclimates across Melbourne's neighbourhoods",
+    caption: "Monitoring microclimates across Melbourne's neighbourhoods",
     category: "Environment",
     glowColor: GLOW_COLORS[4],
   },
   {
     src: "/img/smart-city.jpg",
     titleKey: "img_smart_city_infrastructure_title",
-    caption:
-      "Sensor networks powering Melbourne's data-driven decisions",
+    caption: "Sensor networks powering Melbourne's data-driven decisions",
     category: "Technology",
     glowColor: GLOW_COLORS[5],
   },
   {
     src: "/img/AI_fire.jpg",
     titleKey: "img_fire_risk_detection_title",
-    caption:
-      "AI-assisted fire risk monitoring using open environmental data",
+    caption: "AI-assisted fire risk monitoring using open environmental data",
     category: "Technology",
     glowColor: GLOW_COLORS[6],
   },
   {
     src: "/img/heat_island.png",
     titleKey: "img_urban_heat_island_title",
-    caption:
-      "Mapping heat islands across the city to guide cooling strategies",
+    caption: "Mapping heat islands across the city to guide cooling strategies",
     category: "Technology",
     glowColor: GLOW_COLORS[0],
   },
   {
     src: "/img/heat_map.png",
     titleKey: "img_geospatial_heat_map_title",
-    caption:
-      "Heat map visualisations derived from Melbourne's open datasets",
+    caption: "Heat map visualisations derived from Melbourne's open datasets",
     category: "Technology",
     glowColor: GLOW_COLORS[1],
   },
   {
     src: "/img/Oil-Supply.jpg",
     titleKey: "img_oil_gas_supply_chain_title",
-    caption:
-      "Analysing energy supply chain data through Melbourne's open datasets",
+    caption: "Analysing energy supply chain data through Melbourne's open datasets",
     category: "Technology",
     glowColor: GLOW_COLORS[2],
   },
   {
     src: "/img/sustainable_mobility.jpg",
     titleKey: "img_sustainable_mobility_title",
-    caption:
-      "Open data insights driving cleaner transport alternatives",
+    caption: "Open data insights driving cleaner transport alternatives",
     category: "Sustainability",
     glowColor: GLOW_COLORS[3],
   },
   {
     src: "/img/waste_efficiency.jpg",
     titleKey: "img_waste_management_efficiency_title",
-    caption:
-      "Optimising Melbourne's waste systems through open data",
+    caption: "Optimising Melbourne's waste systems through open data",
     category: "Sustainability",
     glowColor: GLOW_COLORS[4],
   },
   {
     src: "/img/ev-banner.png",
     titleKey: "img_electric_vehicle_rollout_title",
-    caption:
-      "Tracking EV charging infrastructure growth across Melbourne",
+    caption: "Tracking EV charging infrastructure growth across Melbourne",
     category: "Sustainability",
     glowColor: GLOW_COLORS[5],
   },
   {
     src: "/img/education.jpg",
     titleKey: "img_education_open_data_title",
-    caption:
-      "Open data insights improving educational outcomes across the city",
+    caption: "Open data insights improving educational outcomes across the city",
     category: "Society",
     glowColor: GLOW_COLORS[6],
   },
   {
     src: "/img/social_indicator.jpg",
     titleKey: "img_social_wellbeing_indicators_title",
-    caption:
-      "Measuring community wellbeing through Melbourne's open data",
+    caption: "Measuring community wellbeing through Melbourne's open data",
     category: "Society",
     glowColor: GLOW_COLORS[0],
   },
   {
     src: "/img/biotech.jpeg",
     titleKey: "img_biotechnology_research_title",
-    caption:
-      "Cutting-edge biotech research enabled by open data access",
+    caption: "Cutting-edge biotech research enabled by open data access",
     category: "Society",
     glowColor: GLOW_COLORS[1],
   },
@@ -230,8 +213,23 @@ const IMAGES: GalleryImage[] = [
 
 export default function GalleryPage() {
   const t = useTranslations("common");
-  const [activeCategory, setActiveCategory] = useState<Category>("All");
   const [lightbox, setLightbox] = useState<GalleryImage | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(IMAGES.length / ITEMS_PER_PAGE);
+
+  const paginatedImages = IMAGES.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const goToPreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
   const closeLightbox = useCallback(() => {
     setLightbox(null);
@@ -261,12 +259,6 @@ export default function GalleryPage() {
     };
   }, [lightbox]);
 
-  const filtered = useMemo(() => {
-    return activeCategory === "All"
-      ? IMAGES
-      : IMAGES.filter((img) => img.category === activeCategory);
-  }, [activeCategory]);
-
   return (
     <>
       <style>{`
@@ -277,38 +269,6 @@ export default function GalleryPage() {
 
         .anim-fade-up {
           animation: fadeUp 0.5s ease-out both;
-        }
-
-        @keyframes shimmerSweep {
-          0%   { transform: translateX(-200%) skewX(-20deg); }
-          100% { transform: translateX(600%) skewX(-20deg); }
-        }
-
-        .filter-btn {
-          position: relative;
-          overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .filter-btn::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          left: -60%;
-          width: 40%;
-          background: linear-gradient(to right, transparent, rgba(255,255,255,0.25), transparent);
-          transform: skewX(-20deg);
-          pointer-events: none;
-        }
-
-        .filter-btn:hover::after {
-          animation: shimmerSweep 0.45s ease forwards;
-        }
-
-        .filter-btn:hover {
-          transform: scale(1.03);
-          box-shadow: 0 0 0 1px #22c55e, 0 0 10px 2px rgba(34, 197, 94, 0.25);
         }
       `}</style>
 
@@ -360,82 +320,89 @@ export default function GalleryPage() {
           </div>
         </section>
 
-        <div className="sticky top-16 z-30 bg-white/90 dark:bg-[#0f1117]/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 py-3 overflow-x-auto">
-            <div className="flex gap-2 whitespace-nowrap w-max min-w-full pb-0.5">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`filter-btn px-4 py-1.5 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 ${
-                    activeCategory === cat
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400"
-                  }`}
-                >
-                  {t(`cat_${cat.toLowerCase()}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-10">
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
-            {t("showing_images", { count: IMAGES.length })}
+            {t("showing_images", { count: paginatedImages.length })} of{" "}
+            {IMAGES.length}
           </p>
 
-          {filtered.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((img, idx) => (
-                <button
-                  key={`${img.src}-${idx}`}
-                  onClick={() => setLightbox(img)}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.boxShadow = `0 0 0 2px ${img.glowColor}, 0 0 14px 4px ${img.glowColor}44`)
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.boxShadow = "")
-                  }
-                  className="group relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 shadow-md transition-transform duration-200 hover:-translate-y-0.5 text-left w-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  <div className="relative h-64 overflow-hidden">
-                    <Image
-                      src={img.src}
-                      alt={t(img.titleKey)}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      loading="lazy"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
+          {IMAGES.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedImages.map((img, idx) => (
+                  <button
+                    key={`${img.src}-${idx}`}
+                    onClick={() => setLightbox(img)}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.boxShadow = `0 0 0 2px ${img.glowColor}, 0 0 14px 4px ${img.glowColor}44`)
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.boxShadow = "")
+                    }
+                    className="group relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 shadow-md transition-transform duration-200 hover:-translate-y-0.5 text-left w-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  >
+                    <div className="relative h-64 overflow-hidden">
+                      <Image
+                        src={img.src}
+                        alt={t(img.titleKey)}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        loading="lazy"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
 
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
-                      <span className="text-xs font-bold uppercase tracking-widest text-green-400 mb-1.5">
-                        {t(`cat_${img.category.toLowerCase()}`)}
-                      </span>
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
+                        <span className="text-xs font-bold uppercase tracking-widest text-green-400 mb-1.5">
+                          {t(`cat_${img.category.toLowerCase()}`)}
+                        </span>
 
-                      <h3 className="text-white font-bold text-lg leading-tight mb-1">
+                        <h3 className="text-white font-bold text-lg leading-tight mb-1">
+                          {t(img.titleKey)}
+                        </h3>
+
+                        <p className="text-gray-200 text-sm leading-snug line-clamp-2">
+                          {img.caption}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="px-4 py-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
+                      <h3 className="text-gray-800 dark:text-white font-semibold text-sm truncate">
                         {t(img.titleKey)}
                       </h3>
 
-                      <p className="text-gray-200 text-sm leading-snug line-clamp-2">
-                        {img.caption}
-                      </p>
+                      <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                        {t(`cat_${img.category.toLowerCase()}`)}
+                      </span>
                     </div>
-                  </div>
+                  </button>
+                ))}
+              </div>
 
-                  <div className="px-4 py-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
-                    <h3 className="text-gray-800 dark:text-white font-semibold text-sm truncate">
-                      {t(img.titleKey)}
-                    </h3>
+             {totalPages > 1 && (
+  <div className="mt-12 flex items-center justify-center gap-3">
+    <button
+      onClick={goToPreviousPage}
+      disabled={currentPage === 1}
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+    >
+      <ChevronLeft size={18} />
+    </button>
 
-                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                      {t(`cat_${img.category.toLowerCase()}`)}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
+    <span className="rounded-full bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+      Page {currentPage} of {totalPages}
+    </span>
+
+    <button
+      onClick={goToNextPage}
+      disabled={currentPage === totalPages}
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+    >
+      <ChevronRight size={18} />
+    </button>
+  </div>
+)}
+            </>
           ) : (
             <div className="flex min-h-[250px] items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center dark:border-gray-700 dark:bg-[#242424]">
               <p className="text-base font-medium text-gray-500 dark:text-gray-400">

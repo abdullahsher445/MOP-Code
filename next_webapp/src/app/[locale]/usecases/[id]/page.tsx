@@ -6,6 +6,7 @@ import { Link } from "@/i18n-navigation";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import NotebookRenderer from "@/components/NotebookRenderer";
 
 const UseCasePage: React.FC = () => {
   const params = useParams();
@@ -20,7 +21,7 @@ const UseCasePage: React.FC = () => {
     if (!id) return;
 
     Promise.all([
-      fetch(`/api/usecases/${id}`).then((r) => r.json()),
+      fetch(`/api/usecases/${id}?include_content=true`).then((r) => r.json()),
       fetch(`/api/usecases/${id}/tags`).then((r) => r.json()),
     ])
       .then(([ucJson, tagsJson]) => {
@@ -28,7 +29,9 @@ const UseCasePage: React.FC = () => {
           setNotFound(true);
           return;
         }
+
         setUseCase(ucJson.data);
+
         if (tagsJson.success && Array.isArray(tagsJson.data)) {
           setTags(tagsJson.data.map((t: any) => t.name));
         }
@@ -84,6 +87,15 @@ const UseCasePage: React.FC = () => {
             </p>
           )}
 
+          {useCase.created_by_name && (
+            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+              Created by{" "}
+              <span className="font-medium text-gray-700 dark:text-gray-200">
+                {useCase.created_by_name}
+              </span>
+            </p>
+          )}
+
           {tags.length > 0 && (
             <div className="mb-8 flex flex-wrap gap-2">
               {tags.map((tag) => (
@@ -105,8 +117,36 @@ const UseCasePage: React.FC = () => {
             />
           )}
 
+          {useCase.content ? (
+            (() => {
+              try {
+                const parsed = JSON.parse(useCase.content);
+                if (Array.isArray(parsed.cells)) {
+                  return (
+                    <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+                      <NotebookRenderer content={useCase.content} />
+                    </div>
+                  );
+                }
+              } catch {}
+              // fallback for old HTML content already in DB
+              return (
+                <iframe
+                  srcDoc={useCase.content}
+                  className="mb-8 w-full rounded-2xl border border-gray-200 dark:border-gray-700"
+                  style={{ height: "80vh", minHeight: "400px" }}
+                  title={useCase.title}
+                />
+              );
+            })()
+          ) : (
+            <div className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              No notebook content available for this use case.
+            </div>
+          )}
+
           <Link
-            href="/usecases"
+            href="/en/usecases"
             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-green-600 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
             <ArrowLeft size={16} />

@@ -1,5 +1,8 @@
 "use client";
-
+import ConfirmModal from "@/components/admin/ConfirmModal";
+import AdminToast from "@/components/admin/AdminToast";
+import ImageHoverPreview from "@/components/admin/ImageHoverPreview";
+import TextHoverPreview from "@/components/admin/TextHoverPreview";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -30,6 +33,8 @@ export default function CategoriesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     fetchCategories(page);
@@ -66,26 +71,46 @@ export default function CategoriesPage() {
     }
   }
 
-  async function handleDelete(id: number, name: string) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  function handleDelete(id: number, name: string) {
+    setDeleteTarget({ id, name });
+  }
+  
+  async function confirmDeleteCategory() {
+    if (!deleteTarget) return;
+  
     try {
-      const res = await fetch(`/api/categories/${id}`, {
+      const res = await fetch(`/api/categories/${deleteTarget.id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
+  
       const json = await res.json();
+  
       if (!json.success) {
-        alert(json.message || "Failed to delete category.");
+        setToast({
+          message: json.message || "Failed to delete category.",
+          type: "error",
+        });
         return;
       }
-      // If we deleted the last item on a non-first page, go back one page
+  
+      setToast({
+        message: "Category deleted successfully.",
+        type: "success",
+      });
+  
+      setDeleteTarget(null);
+  
       if (categories.length === 1 && page > 1) {
         setPage((p) => p - 1);
       } else {
         fetchCategories(page);
       }
     } catch {
-      alert("Failed to delete category.");
+      setToast({
+        message: "Failed to delete category.",
+        type: "error",
+      });
     }
   }
 
@@ -153,11 +178,10 @@ export default function CategoriesPage() {
               {!loading && categories.map((category) => (
                 <tr key={category.id} className="border-b border-black/10">
                   <td className="px-3 py-4">
-                    <img
-                      src={category.cover_img || "/images/category-placeholder.png"}
-                      alt={category.category_name}
-                      className="h-14 w-14 rounded-lg object-cover border border-gray-300 bg-white"
-                    />
+                  <ImageHoverPreview
+                     src={category.cover_img || "/images/category-placeholder.png"}
+                     alt={category.category_name}
+                  />
                   </td>
 
                   <td className="px-3 py-4 text-[14px] font-medium text-black">
@@ -165,8 +189,8 @@ export default function CategoriesPage() {
                   </td>
 
                   <td className="px-3 py-4 text-[14px] text-[#687280]">
-                    {category.description || "—"}
-                  </td>
+  <TextHoverPreview text={category.description || "—"} />
+</td>
 
                   <td className="px-3 py-4">
                     <div className="flex items-center gap-2">
@@ -198,8 +222,8 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="mt-6 flex items-center justify-between">
+            {/* Pagination */}
+            <div className="mt-6 flex items-center justify-between">
         <p className="text-sm text-[#687280]">
           Showing {rangeStart}–{rangeEnd} of {total}
         </p>
@@ -225,6 +249,25 @@ export default function CategoriesPage() {
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

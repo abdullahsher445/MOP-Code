@@ -179,7 +179,7 @@ export default function ContactUsSection() {
                     Email
                   </h4>
                   <p className="text-gray-600 dark:text-gray-300">
-                    contact@example.com
+                    emailaccount@example.com
                   </p>
                 </div>
               </div>
@@ -193,7 +193,7 @@ export default function ContactUsSection() {
                     Phone
                   </h4>
                   <p className="text-gray-600 dark:text-gray-300">
-                    +61 123 456 789
+                    +61 3 9658 9658
                   </p>
                 </div>
               </div>
@@ -207,7 +207,7 @@ export default function ContactUsSection() {
                     Location
                   </h4>
                   <p className="text-gray-600 dark:text-gray-300">
-                    Melbourne, Australia
+                    City of Melbourne, GPO Box 1603, Melbourne VIC 3001
                   </p>
                 </div>
               </div>

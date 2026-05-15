@@ -6,6 +6,9 @@ export type LocalSearchMode = "title" | "tag" | "content";
 
 interface SearchBarProps {
   onSearch: (term: string, mode: LocalSearchMode, category: CATEGORY) => void;
+  initialTerm?: string;
+  initialMode?: LocalSearchMode;
+  onTermChange?: (term: string, mode: LocalSearchMode) => void;
 }
 
 const searchModeOptions: { value: LocalSearchMode; label: string }[] = [
@@ -14,9 +17,9 @@ const searchModeOptions: { value: LocalSearchMode; label: string }[] = [
   { value: "content", label: "Search by content" },
 ];
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
-  const [term, setTerm] = useState("");
-  const [mode, setMode] = useState<LocalSearchMode>("title");
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialTerm = "", initialMode = "title", onTermChange }) => {
+  const [term, setTerm] = useState(initialTerm);
+  const [mode, setMode] = useState<LocalSearchMode>(initialMode);
   const [category] = useState<CATEGORY>(CATEGORY.ALL);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -43,6 +46,17 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
     };
   }, []);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTerm(e.target.value);
+    onTermChange?.(e.target.value, mode);
+  };
+
+  const handleModeSelect = (newMode: LocalSearchMode) => {
+    setMode(newMode);
+    setIsDropdownOpen(false);
+    onTermChange?.(term, newMode);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(term, mode, category);
@@ -53,6 +67,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
     setMode("title");
     setIsDropdownOpen(false);
     onSearch("", "title", CATEGORY.ALL);
+    onTermChange?.("", "title");
   };
 
   return (
@@ -71,7 +86,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             type="search"
             placeholder="Search use cases"
             value={term}
-            onChange={(e) => setTerm(e.target.value)}
+            onChange={handleInputChange}
             className="h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-4 text-sm outline-none transition focus:border-green-500 focus:bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:bg-gray-700"
           />
         </div>
@@ -109,10 +124,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => {
-                          setMode(option.value);
-                          setIsDropdownOpen(false);
-                        }}
+                        onClick={() => handleModeSelect(option.value)}
                         className={`block w-full px-4 py-2.5 text-left text-sm font-medium transition ${
                           isSelected
                             ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"

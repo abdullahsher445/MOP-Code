@@ -3,25 +3,21 @@
 
 
 // edits for use case studies
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n-navigation";
 
 import Image from "next/image";
 import secondimage from "../../public/img/second_image.png";
 import HeroSlider, { HERO_SLIDES } from "@/components/HeroSlider";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { CaseStudy, CATEGORY, SEARCH_MODE, SearchParams } from "@/app/types";
 import { useEffect, useState, useRef } from "react";
 import {
-	ArrowLeft,
-	FileText,
 	ArrowRight,
 	Play,
 	ChevronDown,
 	Search,
 	X,
 } from "lucide-react";
-import Carousel from "react-multi-carousel";
-import "react-multi-carousel/lib/styles.css";
 import CityMetricCard, { CityMetric } from "@/components/CityMetricCard";
 import { Users, Car, Trees, Home, DollarSign, Heart } from "lucide-react";
 
@@ -96,13 +92,15 @@ const style = `
   flex: 1;
 }
 
-/* Enhanced Hero Section */
+/* Enhanced Hero Section — overflow visible so the search preview can extend below;
+   background images stay clipped via .hero-image-container */
 .hero-section {
   width: 100%;
   height: 90vh;
   min-height: 700px;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,6 +112,7 @@ const style = `
   width: 100%;
   height: 100%;
   z-index: 1;
+  overflow: hidden;
 }
 .hero-image-container::before {
   content: '';
@@ -332,57 +331,182 @@ const style = `
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
-  max-width: 800px;
+  width: 100%;
+  max-width: min(100%, 640px);
+  margin-top: 0.75rem;
   background: white;
-  border-radius: 12px;
-  margin-top: 1rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  max-height: 400px;
-  overflow-y: auto;
-  z-index: 10;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.08),
+    0 20px 40px -12px rgba(0, 0, 0, 0.18);
+  z-index: 100;
+  overflow: hidden;
+  text-align: left;
 }
 .dark .search-results {
-  background: #37474f;
-  color: white;
+  background: #2d3e47;
+  color: #eceff1;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.35),
+    0 24px 48px -12px rgba(0, 0, 0, 0.45);
 }
-.search-result-item {
-  padding: 1rem;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.dark .search-result-item {
-  border-bottom: 1px solid #546e7a;
-}
-.search-result-item:hover {
-  background: #f5f5f5;
-}
-.dark .search-result-item:hover {
-  background: #455a64;
-}
-.search-result-item h4 {
-  margin: 0 0 0.5rem 0;
-  color: #263238;
-}
-.dark .search-result-item h4 {
-  color: white;
-}
-.search-result-item p {
-  margin: 0;
-  font-size: 0.9rem;
+.search-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #546e7a;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
 }
-.dark .search-result-item p {
-  color: #b0bec5;
+.dark .search-results-header {
+  color: #90a4ae;
+  background: linear-gradient(180deg, #37474f 0%, #2d3e47 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+.search-results-count {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  color: #047857;
+}
+.dark .search-results-count {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+.search-results-scroll {
+  max-height: clamp(200px, 42vh, 380px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 10px;
+}
+.search-results-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.search-results-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+.dark .search-results-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+button.search-result-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  border-bottom: 1px solid #eceff1;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.dark button.search-result-item {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+button.search-result-item:last-of-type {
+  border-bottom: none;
+}
+button.search-result-item:hover {
+  background: #f8fafc;
+}
+.dark button.search-result-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+button.search-result-item:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: -2px;
+}
+.search-result-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 0.35rem 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+}
+.dark .search-result-title {
+  color: #f1f5f9;
+}
+.search-result-snippet {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+.dark .search-result-snippet {
+  color: #94a3b8;
+}
+.search-result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+.search-result-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dark .search-result-tag {
+  background: rgba(16, 185, 129, 0.18);
+  color: #a7f3d0;
+}
+.search-results-hint {
+  padding: 0.5rem 1rem 0.65rem;
+  font-size: 0.68rem;
+  color: #90a4ae;
+  text-align: center;
+  border-top: 1px solid #eceff1;
+  background: #fafafa;
+}
+.dark .search-results-hint {
+  color: #78909c;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
 }
 .no-results {
-  padding: 1.5rem;
+  padding: 1.75rem 1.25rem;
   text-align: center;
   color: #78909c;
 }
 .dark .no-results {
   color: #b0bec5;
+}
+.no-results p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+}
+.no-results .loading-spinner {
+  margin-bottom: 0.25rem;
 }
 
 .scroll-indicator {
@@ -451,6 +575,15 @@ const style = `
   .search-option {
     flex: 1;
     text-align: center;
+  }
+  .search-results {
+    width: calc(100vw - 1.5rem);
+    max-width: none;
+    margin-top: 0.65rem;
+    border-radius: 14px;
+  }
+  .search-results-scroll {
+    max-height: min(48vh, 320px);
   }
 
   /* ── Hero slider — mobile overrides ─────────────────────────────────── */
@@ -672,39 +805,6 @@ const style = `
   margin-left: auto;
   margin-right: auto;
 }
-.case-studies {
-  margin: 2rem auto 0 auto;
-  padding: 0 1rem;
-  max-width: 1400px;
-  color: #263238;
-}
-.dark .case-studies {
-  color: white;
-}
-.case-study {
-  background: white;
-  color: #263238;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: box-shadow 0.3s;
-  margin: 0 0.5rem;
-  height: 80%;
-  border-radius: 0.5rem;
-}
-.dark .case-study {
-  background: #37474f;
-  color: white;
-}
-.case-study:hover {
-  box-shadow: 0 8px 12px rgba(0,0,0,0.2);
-}
-.case-study img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-.react-multi-carousel-item {
-  padding: 0 0.5rem;
-}
 
 /* Loading states */
 .loading-spinner {
@@ -750,34 +850,18 @@ const style = `
 `;
 
 
-const responsive = {
-	superLargeDesktop: { breakpoint: { max: 4000, min: 3000 }, items: 5 },
-	desktop: { breakpoint: { max: 3000, min: 1024 }, items: 3 },
-	tablet: { breakpoint: { max: 1024, min: 464 }, items: 2 },
-	mobile: { breakpoint: { max: 464, min: 0 }, items: 1 },
-};
-
-// Get available search modes from the SEARCH_MODE enum
-const getSearchModeValues = () => {
-	try {
-		const searchModes = Object.values(SEARCH_MODE).filter(
-			(value) => typeof value === "string"
-		) as string[];
-
-		if (searchModes.length === 0) {
-			return ["TITLE", "CONTENT"];
-		}
-
-		return searchModes;
-	} catch (error) {
-		return ["TITLE", "CONTENT"];
-	}
-};
+/** Hero search: explicit modes so Title / Content / Tag always map to the API correctly */
+const HERO_SEARCH_MODES: { value: SEARCH_MODE; label: string }[] = [
+	{ value: SEARCH_MODE.TITLE, label: "Title" },
+	{ value: SEARCH_MODE.CONTENT, label: "Content" },
+	{ value: SEARCH_MODE.TAG, label: "Tag" },
+];
 
 const Dashboard = () => {
 
   //edits for use case studies
   const router = useRouter();
+  const locale = useLocale();
 
 	const t = useTranslations("common");
 	const t_hero = useTranslations("hero");
@@ -787,15 +871,11 @@ const Dashboard = () => {
 	const [filteredCaseStudies, setFilteredCaseStudies] = useState<CaseStudy[]>(
 		[]
 	);
-	const [selectedCaseStudy, setSelectedCaseStudy] = useState<
-		CaseStudy | undefined
-	>(undefined);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [searchMode, setSearchMode] = useState<SEARCH_MODE>(SEARCH_MODE.TITLE);
 	const [category, setCategory] = useState<CATEGORY>(CATEGORY.ALL);
 	const [showSearchResults, setShowSearchResults] = useState(false);
 	const [isSearching, setIsSearching] = useState(false);
-	const [debugInfo, setDebugInfo] = useState<any>(null);
 	const [recentUseCases, setRecentUseCases] = useState<any[]>([]);
 	const [recentLoading, setRecentLoading] = useState(true);
 	const [homeCategories, setHomeCategories] = useState<any[]>([]);
@@ -825,15 +905,52 @@ const Dashboard = () => {
 	const handleNext = () => goToSlide((currentSlide + 1) % HERO_SLIDES.length);
 	const handlePrev = () => goToSlide((currentSlide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
 
-	// Create ref for the search container
+	// Hero search: Title / Content / Tag (see HERO_SEARCH_MODES)
 	const searchContainerRef = useRef<HTMLDivElement>(null);
-
-	// Get available search modes
-	const availableSearchModes = getSearchModeValues();
 
 	useEffect(() => {
 		handleSearch("", SEARCH_MODE.TITLE, CATEGORY.ALL);
 	}, []);
+
+	// Live hero search: debounce 350ms, fetch top 5 matching usecases for dropdown
+	useEffect(() => {
+		if (!searchTerm.trim()) {
+			setFilteredCaseStudies([]);
+			setShowSearchResults(false);
+			return;
+		}
+		const timer = setTimeout(async () => {
+			setIsSearching(true);
+			try {
+				const params = new URLSearchParams({ pageSize: "5" });
+				if (searchMode === SEARCH_MODE.TAG) {
+					params.set("tag_name", searchTerm.trim());
+				} else {
+					params.set("search", searchTerm.trim());
+					params.set("search_by", searchMode);
+				}
+				const res = await fetch(`/api/usecases?${params}`);
+				const json = await res.json();
+				if (json.success) {
+					setFilteredCaseStudies(
+						(json.data || []).map((u: any) => ({
+							id: u.id,
+							title: u.title,
+							description: u.description ?? "",
+							tags: (u.tags || []).map((t: any) => (typeof t === "string" ? t : t.name)),
+							htmlFile: "",
+						}))
+					);
+					setShowSearchResults(true);
+				}
+			} catch {
+				// silently ignore
+			} finally {
+				setIsSearching(false);
+			}
+		}, 350);
+		return () => clearTimeout(timer);
+	}, [searchTerm, searchMode]);
 
 	useEffect(() => {
 		fetch("/api/usecases/recent")
@@ -887,48 +1004,83 @@ const Dashboard = () => {
 		return () => clearTimeout(delay);
 	}, [heroTitle]);
 
-	const searchUseCases = async (searchParams: SearchParams) => {
-		const response = await fetch("/api/search-use-cases", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(searchParams),
-		});
+	const mapApiRowToCaseStudy = (u: Record<string, unknown>): CaseStudy => {
+		const rawTags = Array.isArray(u.tags) ? u.tags : [];
+		const tags = rawTags.map((t) =>
+			typeof t === "string" ? t : String((t as { name?: string })?.name ?? ""),
+		);
 
-		if (!response.ok) {
+		return {
+			id: Number(u.id),
+			title: String(u.title ?? ""),
+			description: typeof u.description === "string" ? u.description : "",
+			tags,
+			htmlFile: "",
+			category: CATEGORY.ALL,
+		};
+	};
 
-			throw new Error(`HTTP error! status: ${response.status}`);
+	const fetchUsecasesSearch = async (
+		term: string,
+		mode: SEARCH_MODE,
+	): Promise<CaseStudy[]> => {
+		const trimmed = term.trim();
+		const params = new URLSearchParams();
+		params.set("pageSize", "20");
+		params.set("page", "1");
 
-			throw new Error('HTTP error! status: ${response.status}');
-
+		if (trimmed) {
+			if (mode === SEARCH_MODE.TAG) {
+				params.set("tag_name", trimmed);
+			} else if (mode === SEARCH_MODE.TITLE) {
+				params.set("q", trimmed);
+				params.set("search_by", "title");
+			} else {
+				/* Content: match legacy behaviour — search title, description, and notebook body */
+				params.set("q", trimmed);
+				params.set("search_by", "all");
+			}
 		}
 
-		return await response.json();
+		const response = await fetch(`/api/usecases?${params.toString()}`);
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		const json = (await response.json()) as {
+			success?: boolean;
+			data?: Record<string, unknown>[];
+			error?: string;
+		};
+
+		if (!json.success) {
+			throw new Error(json.error || "Search failed");
+		}
+
+		return (json.data ?? []).map(mapApiRowToCaseStudy);
 	};
 
 	const handleSearch = async (
-		searchTerm: string,
-		searchMode: SEARCH_MODE,
-		category: CATEGORY
+		searchTermArg: string,
+		searchModeArg: SEARCH_MODE,
+		_category: CATEGORY,
 	) => {
 		setIsSearching(true);
 		try {
-			const res = await searchUseCases({ searchTerm, searchMode, category });
-			setFilteredCaseStudies(res?.filteredStudies || []);
-			setDebugInfo(res?.debug || null);
+			const studies = await fetchUsecasesSearch(searchTermArg, searchModeArg);
+			setFilteredCaseStudies(studies);
 		} catch (error) {
 			console.error("Search error:", error);
+			setFilteredCaseStudies([]);
 		} finally {
 			setIsSearching(false);
 		}
 	};
 
 	const handleCaseStudyClick = (study: CaseStudy) => {
-		setSelectedCaseStudy(study);
 		setShowSearchResults(false);
-	};
-
-	const handleBack = () => {
-		setSelectedCaseStudy(undefined);
+		router.push(`/${locale}/usecases?search=${encodeURIComponent(study.title)}&search_by=title`);
 	};
 
 	const scrollToContent = () => {
@@ -939,8 +1091,15 @@ const Dashboard = () => {
 
 	const handleSearchSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		handleSearch(searchTerm, searchMode, category);
-		setShowSearchResults(true);
+		if (!searchTerm.trim()) return;
+		const params = new URLSearchParams();
+		if (searchMode === SEARCH_MODE.TAG) {
+			params.set("tag_name", searchTerm.trim());
+		} else {
+			params.set("search", searchTerm.trim());
+			params.set("search_by", searchMode);
+		}
+		router.push(`/${locale}/usecases?${params.toString()}`);
 	};
 
 	const clearSearch = () => {
@@ -948,32 +1107,6 @@ const Dashboard = () => {
 		setShowSearchResults(false);
 		handleSearch("", SEARCH_MODE.TITLE, CATEGORY.ALL);
 	};
-
-	if (selectedCaseStudy) {
-		return (
-			<div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-black dark:text-white p-8">
-				<button
-					onClick={handleBack}
-					className="flex items-center text-green-500 mb-4 hover:text-green-700 transition-colors duration-300"
-				>
-					<ArrowLeft size={24} className="mr-2" />
-					Back
-				</button>
-				<div className="bg-white dark:bg-gray-800 rounded-lg shadow-md flex-grow overflow-hidden flex flex-col">
-					<h1 className="text-3xl font-bold mb-4 px-6 pt-6">
-						{selectedCaseStudy.name}
-					</h1>
-					<iframe
-
-						src={`/api?filename=${selectedCaseStudy.filename}`}
-
-						title={selectedCaseStudy.name}
-						className="flex-grow w-full border-none bg-white dark:bg-gray-900 text-black dark:text-white"
-					/>
-				</div>
-			</div>
-		);
-	}
 
 	return (
 		<>
@@ -1008,9 +1141,9 @@ const Dashboard = () => {
 							<p className="hero-subtitle">{t_hero("hero-sub")}</p>
 
 							<div className="hero-buttons">
-								<button className="hero-button primary">
+								<Link href="/usecases" className="hero-button primary">
 									{t_hero("exploreCaseStudies")} <ArrowRight size={20} />
-								</button>
+								</Link>
 								<a
 									href="https://youtu.be/D-H-nCrQDZo"
 									target="_blank"
@@ -1049,16 +1182,25 @@ const Dashboard = () => {
 										</button>
 									)}
 									<div className="search-options">
-										{availableSearchModes.map((mode) => (
+										{HERO_SEARCH_MODES.map(({ value, label }) => (
 											<button
-												key={mode}
+												key={value}
 												type="button"
 												className={`search-option ${
-													searchMode === mode ? "active" : ""
+													searchMode === value ? "active" : ""
 												}`}
-												onClick={() => setSearchMode(mode as SEARCH_MODE)}
+												onClick={() => {
+													setSearchMode(value);
+													if (searchTerm.trim()) {
+														void handleSearch(
+															searchTerm.trim(),
+															value,
+															category,
+														);
+													}
+												}}
 											>
-												{mode.charAt(0) + mode.slice(1).toLowerCase()}
+												{label}
 											</button>
 										))}
 									</div>
@@ -1068,35 +1210,76 @@ const Dashboard = () => {
 								</form>
 
 								{showSearchResults && (
-									<div className="search-results">
-										{isSearching ? (
-											<div className="no-results">
-												<div className="loading-spinner"></div>
-												<p>Searching...</p>
+									<div
+										className="search-results"
+										role="region"
+										aria-label="Search results"
+										aria-busy={isSearching}
+									>
+										{!isSearching && filteredCaseStudies.length > 0 ? (
+											<div className="search-results-header">
+												<span>Use cases</span>
+												<span className="search-results-count">
+													{filteredCaseStudies.length}
+												</span>
 											</div>
-										) : filteredCaseStudies.length > 0 ? (
-											filteredCaseStudies.map((study) => (
-												<div
-													key={study.id}
-													className="search-result-item"
-													onClick={() => handleCaseStudyClick(study)}
-												>
-													<h4>{study.name}</h4>
-													<p>
-														{study.description.split(" ").length > 30
-															? `${study.description
-																	.split(" ")
-																	.slice(0, 30)
-																	.join(" ")}...`
-															: study.description}
+										) : null}
+										<div className="search-results-scroll">
+											{isSearching ? (
+												<div className="no-results">
+													<div className="loading-spinner" />
+													<p>Searching…</p>
+												</div>
+											) : filteredCaseStudies.length > 0 ? (
+												filteredCaseStudies.map((study) => (
+													<button
+														key={study.id}
+														type="button"
+														className="search-result-item"
+														onClick={() => handleCaseStudyClick(study)}
+													>
+														<span className="search-result-title">
+															{study.title}
+														</span>
+														<span className="search-result-snippet">
+															{study.description || ""}
+														</span>
+														{study.tags && study.tags.length > 0 ? (
+															<div className="search-result-tags">
+																{study.tags.slice(0, 4).map((tag, i) => (
+																	<span
+																		key={`${study.id}-tag-${i}`}
+																		className="search-result-tag"
+																		title={
+																			typeof tag === "string"
+																				? tag
+																				: String(tag)
+																		}
+																	>
+																		{typeof tag === "string"
+																			? tag
+																			: String(tag)}
+																	</span>
+																))}
+															</div>
+														) : null}
+													</button>
+												))
+											) : (
+												<div className="no-results">
+													<p>No use cases match that search.</p>
+													<p style={{ fontSize: "0.82rem", opacity: 0.85 }}>
+														Try another keyword or switch Title / Content /
+														Tag.
 													</p>
 												</div>
-											))
-										) : (
-											<div className="no-results">
-												No case studies found. Try a different search.
+											)}
+										</div>
+										{!isSearching && filteredCaseStudies.length > 0 ? (
+											<div className="search-results-hint">
+												Click a result to open the use case
 											</div>
-										)}
+										) : null}
 									</div>
 								)}
 							</div>
@@ -1120,7 +1303,7 @@ const Dashboard = () => {
 						</div>
 					</section>
 					{/* City Metric Solution  */}
-					<section className="city-metrics-section bg-gray-50 dark:bg-gray-900 py-12">
+					<section className="city-metrics-section relative z-0 bg-gray-50 dark:bg-gray-900 py-12">
 						<div className="container mx-auto px-4">
 							<h2 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">
 								City Metrics Overview
@@ -1188,7 +1371,7 @@ const Dashboard = () => {
                         ))}
                       </div>
                       <button
-                        onClick={() => router.push(`/recent/${item.id}`)}
+                        onClick={() => router.push(`/usecases/${item.id}`)}
                         className="mt-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-medium text-center"
                       >
                         View Details →
@@ -1198,56 +1381,6 @@ const Dashboard = () => {
                 ))}
               </div>
             )}
-
-
-						<section className="case-studies">
-							<Carousel responsive={responsive}>
-								{filteredCaseStudies.slice(0, 6).map((study) => (
-									<div
-										key={study.id}
-										className="case-study p-4 cursor-pointer hover:shadow-2xl transition-shadow duration-300"
-										onClick={() => handleCaseStudyClick(study)}
-									>
-										<div className="flex items-center justify-center mb-4">
-											<FileText size={48} className="text-green-500" />
-											<FileText size={48} className="text-teal-400 -ml-6" />
-											<FileText
-												size={48}
-												className="text-green-700 -ml-6 rotate-6"
-											/>
-										</div>
-										<h3 className="font-bold text-lg text-center mb-2">
-											{study.name}
-										</h3>
-										<p className="text-gray-600 dark:text-gray-300 text-sm text-center mb-2">
-											{study.description.split(" ").length > 50
-												? `${study.description
-														.split(" ")
-														.slice(0, 50)
-														.join(" ")}...`
-												: study.description}
-										</p>
-										<div className="flex flex-wrap justify-center gap-2">
-											<p className="text-sm text-gray-500 dark:text-gray-400">
-												Tags:
-											</p>
-											{study.tags &&
-												study.tags.map((tag, index) => (
-													<span
-														key={index}
-														className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs px-2 py-1 rounded-full"
-													>
-														{tag}
-													</span>
-												))}
-										</div>
-									</div>
-								))}
-							</Carousel>
-							
-						</section>
-
-
 
 						</section>
 

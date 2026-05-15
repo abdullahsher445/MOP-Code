@@ -51,14 +51,13 @@ const BlogSinglePage: React.FC<{ id: string }> = ({ id }) => {
 
         setBlog(json.data);
 
-        // Fetch a page of blogs for "Continue exploring" and exclude current
-        const relRes = await fetch(`/api/home/blogs?pageSize=4`);
+        // Random recommendations (server pools up to 800, shuffles, returns 3)
+        const relRes = await fetch(
+          `/api/home/blogs?recommend=1&excludeId=${encodeURIComponent(String(json.data.id))}&take=3`
+        );
         const relJson = await relRes.json();
-        if (relJson.success) {
-          const others = (relJson.data as RelatedBlog[]).filter(
-            (b) => b.id !== json.data.id
-          ).slice(0, 3);
-          setRelated(others);
+        if (relJson.success && Array.isArray(relJson.data)) {
+          setRelated(relJson.data as RelatedBlog[]);
         }
       } catch (e) {
         console.error(e);

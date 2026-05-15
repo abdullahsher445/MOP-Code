@@ -49,6 +49,7 @@ const Header = () => {
 	const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
 	const [isLangOpen, setIsLangOpen] = useState(false);
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 	const { theme, toggleTheme } = useTheme();
 	const exploreRef = useRef<HTMLDivElement>(null);
 
@@ -81,12 +82,27 @@ const Header = () => {
 		}
 	}, []);
 
-	const handleLogout = () => {
+	useEffect(() => {
+		if (!showLogoutConfirm) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setShowLogoutConfirm(false);
+		};
+		document.addEventListener("keydown", onKey);
+		return () => document.removeEventListener("keydown", onKey);
+	}, [showLogoutConfirm]);
+
+	const performLogout = () => {
 		localStorage.removeItem("token");
 		localStorage.removeItem("user");
 		localStorage.removeItem("userId");
 		setIsLoggedIn(false);
+		setShowLogoutConfirm(false);
 		i18nRouter.push("/");
+	};
+
+	const openLogoutConfirm = () => {
+		closeMenu();
+		setShowLogoutConfirm(true);
 	};
 
 	const selectLanguage = (locale: string) => {
@@ -137,8 +153,65 @@ const Header = () => {
 				? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
 				: "text-gray-700 hover:bg-green-50 hover:text-green-700 dark:text-gray-200 dark:hover:bg-green-900/25 dark:hover:text-green-300"
 		}`;
+		const visibleNavItems = navItems.filter(
+	(item) => item.name !== "Profile" || isLoggedIn
+);
 
 	return (
+		<>
+		{showLogoutConfirm && (
+			<div
+				className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+				role="presentation"
+			>
+				<button
+					type="button"
+					className="absolute inset-0 bg-black/50 backdrop-blur-[2px] dark:bg-black/60"
+					aria-label={t("logout_cancel")}
+					onClick={() => setShowLogoutConfirm(false)}
+				/>
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="logout-dialog-title"
+					aria-describedby="logout-dialog-desc"
+					className="relative z-[201] w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
+				>
+					<div className="h-1 w-full bg-gradient-to-r from-green-500 to-emerald-600" />
+					<div className="px-6 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6">
+						<h2
+							id="logout-dialog-title"
+							className="text-lg font-bold text-gray-900 dark:text-white sm:text-xl"
+						>
+							{t("logout_confirm_title")}
+						</h2>
+						<p
+							id="logout-dialog-desc"
+							className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400"
+						>
+							{t("logout_confirm_body")}
+						</p>
+						<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+							<button
+								type="button"
+								onClick={() => setShowLogoutConfirm(false)}
+								className="inline-flex h-11 items-center justify-center rounded-full border border-gray-300 bg-white px-6 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+							>
+								{t("logout_cancel")}
+							</button>
+							<button
+								type="button"
+								onClick={performLogout}
+								className="inline-flex h-11 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md shadow-green-500/25 transition hover:shadow-lg"
+							>
+								{t("logout_confirm_cta")}
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		)}
+
 		<header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
 			<link
 				href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
@@ -167,7 +240,7 @@ const Header = () => {
 							className="ml-8 hidden lg:flex lg:items-center gap-2"
 							aria-label="Main navigation"
 						>
-							{navItems.map((item) =>
+							{visibleNavItems.map((item) =>
 								item.type === "link" ? (
 									<Link
 										key={item.name}
@@ -253,10 +326,11 @@ const Header = () => {
 						<div className="hidden lg:flex">
 							{isLoggedIn ? (
 								<button
-									onClick={handleLogout}
+									type="button"
+									onClick={openLogoutConfirm}
 									className="h-9 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-600 px-5 text-sm font-medium text-white shadow-md shadow-green-500/25 transition-all duration-200 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
 								>
-									Log Out
+									{t("Log Out")}
 								</button>
 							) : (
 								<Link
@@ -296,7 +370,7 @@ const Header = () => {
 							{/* Top green accent */}
 							<div className="h-0.5 w-full rounded-full bg-gradient-to-r from-green-500 to-emerald-500 mb-2" />
 
-							{navItems.map((item) =>
+							{visibleNavItems.map((item) =>
 								item.type === "link" ? (
 									<Link
 										key={item.name}
@@ -386,10 +460,11 @@ const Header = () => {
 							{/* Log In / Log Out button */}
 							{isLoggedIn ? (
 								<button
-									onClick={handleLogout}
-									className="block w-full text-left text-green-600 hover:text-green-900 px-3 py-2 rounded-md text-base font-medium"
+									type="button"
+									onClick={openLogoutConfirm}
+									className="block w-full text-left text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 px-3 py-2 rounded-md text-base font-medium"
 								>
-									Log Out
+									{t("Log Out")}
 								</button>
 							) : (
 								<Link
@@ -404,6 +479,7 @@ const Header = () => {
 				)}
 			</div>
 		</header>
+		</>
 	);
 };
 

@@ -1,6 +1,7 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { locales } from "./i18n";
+import logger from "./utils/logger";
 
 
 // next-intl middleware instance (handles locale detection + redirects)
@@ -16,7 +17,7 @@ const intlMiddleware = createMiddleware({
  * Matched against the path with any locale prefix stripped.
  */
 
-const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics", "/api/profile", "/api/categories"];
+const PROTECTED_PATHS = ["/dashboard", "/admin", "/upload", "/statistics", "/api/profile", "/api/categories",  "/api/blogs", "/api/gallery", "/api/logs"];
 /**
  * Paths that are always publicly accessible and skip every auth check.
  * Matched against the bare path (locale prefix stripped).
@@ -116,7 +117,25 @@ async function verifyJWT(
 // Middleware entry point
 
 export default async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+  const method = request.method;
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+
+  // Get user info from headers (set by previous middleware runs)
+  const userId = request.headers.get('x-user-id');
+  const userRole = request.headers.get('x-user-role');
+
+  // Log incoming request
+  logger.info(`Request: ${method} ${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, {
+    source: 'middleware',
+    method,
+    url: `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`,
+    ip_address: ip,
+    user_agent: userAgent,
+    user_id: userId ? parseInt(userId) : undefined,
+    user_role: userRole,
+  });
 
   // 1. Always-public paths: skip auth and delegate locale routing to intl
   if (isPublicPath(pathname)) {
@@ -202,7 +221,18 @@ export const config = {
     "/api/categories",          
     "/api/categories/:path*",
 
+    // Protected API routes — blogs
+    "/api/blogs",          
+    "/api/blogs/:path*",
+
+    // Protected API routes — gallery
+    "/api/gallery",          
+    "/api/gallery/:path*",
+    // Protected API routes — logs (admin only)
+    "/api/logs",
+
     // Public auth API routes (handled by isPublicPath — pass straight through)
     "/api/auth/:path*",
   ],
+  runtime: 'nodejs',
 };

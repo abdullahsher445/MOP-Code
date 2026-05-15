@@ -190,14 +190,33 @@ const Contact = () => {
   try {
     setIsSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const response = await fetch("/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName: `${formValues.firstName} ${formValues.lastName}`.trim(),
+        email: formValues.email,
+        subject: formValues.subject,
+        message: `Phone: ${formValues.phone}\n\n${formValues.message}`,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Failed to submit the form.");
+    }
 
     setSuccessMessage("Your message has been sent successfully.");
     setShowSuccess(true);
     setFormValues(initialValues);
     setErrors({});
-  } catch (error) {
-    setFailureMessage("Failed to submit the form. Please try again.");
+  } catch (error: any) {
+    setFailureMessage(
+      error?.message || "Failed to submit the form. Please try again."
+    );
   } finally {
     setIsSubmitting(false);
   }
@@ -398,7 +417,7 @@ const Contact = () => {
                 <FiPhone className="mt-1 text-xl" />
                 <div>
                   <p className="text-sm font-medium text-green-100">Phone</p>
-                  <p className="text-base font-semibold">+61 123 456 789</p>
+                  <p className="text-base font-semibold">+61 3 9658 9658 </p>
                 </div>
               </div>
 
@@ -406,7 +425,7 @@ const Contact = () => {
                 <FiMapPin className="mt-1 text-xl" />
                 <div>
                   <p className="text-sm font-medium text-green-100">Location</p>
-                  <p className="text-base font-semibold">Melbourne, Australia</p>
+                  <p className="text-base font-semibold">City of Melbourne, GPO Box 1603, Melbourne VIC 3001</p>
                 </div>
               </div>
             </div>

@@ -21,7 +21,7 @@ type FAQItem = {
 const faqs: FAQItem[] = [
   {
     icon: <HelpCircle size={15} />,
-    question: "What is MOP (Melbourne Open Platform)?",
+    question: "What is MOP (Melbourne Open Playground)?",
     answer:
       "MOP is an open data platform that aggregates and visualises urban data for Melbourne. It provides access to use cases, datasets, and insights that help researchers, policymakers, and the public understand city trends.",
   },

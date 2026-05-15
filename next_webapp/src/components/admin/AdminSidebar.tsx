@@ -19,6 +19,7 @@ const menuItems = [
   { label: "Gallery", path: "/admin/gallery", icon: ImageIcon },
   // { label: "Blogs", path: "/admin/blogs", icon: FileText },
   { label: "Activity History", path: "/admin/activity-history", icon: History },
+  { label: "Blogs", path: "/admin/blogs", icon: FileText },
 ];
 
 type AdminSidebarProps = {

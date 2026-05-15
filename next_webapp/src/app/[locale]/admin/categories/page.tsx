@@ -1,9 +1,12 @@
 "use client";
-
+import ConfirmModal from "@/components/admin/ConfirmModal";
+import AdminToast from "@/components/admin/AdminToast";
+import ImageHoverPreview from "@/components/admin/ImageHoverPreview";
+import TextHoverPreview from "@/components/admin/TextHoverPreview";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 function getAuthHeaders(): HeadersInit {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -18,27 +21,46 @@ function getAuthHeaders(): HeadersInit {
   };
 }
 
+const PAGE_SIZE = 10;
+
 export default function CategoriesPage() {
   const { locale } = useParams() as { locale: string };
+  const router = useRouter();
 
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    fetchCategories(page);
+  }, [page]);
 
-  async function fetchCategories() {
+  async function fetchCategories(currentPage: number) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/categories", {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        pageSize: String(PAGE_SIZE),
+      });
+      const res = await fetch(`/api/categories?${params}`, {
         headers: getAuthHeaders(),
       });
       const json = await res.json();
+      if (res.status === 401) {
+        localStorage.removeItem("user");
+        router.replace(`/${locale}/login`);
+        return;
+      }
       if (json.success) {
         setCategories(json.data || []);
+        setTotalPages(json.pagination?.totalPages ?? 1);
+        setTotal(json.pagination?.total ?? 0);
       } else {
         setError(json.message || "Failed to load categories.");
       }
@@ -49,23 +71,51 @@ export default function CategoriesPage() {
     }
   }
 
-  async function handleDelete(id: number, name: string) {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  function handleDelete(id: number, name: string) {
+    setDeleteTarget({ id, name });
+  }
+  
+  async function confirmDeleteCategory() {
+    if (!deleteTarget) return;
+  
     try {
-      const res = await fetch(`/api/categories/${id}`, {
+      const res = await fetch(`/api/categories/${deleteTarget.id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
+  
       const json = await res.json();
+  
       if (!json.success) {
-        alert(json.message || "Failed to delete category.");
+        setToast({
+          message: json.message || "Failed to delete category.",
+          type: "error",
+        });
         return;
       }
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+  
+      setToast({
+        message: "Category deleted successfully.",
+        type: "success",
+      });
+  
+      setDeleteTarget(null);
+  
+      if (categories.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        fetchCategories(page);
+      }
     } catch {
-      alert("Failed to delete category.");
+      setToast({
+        message: "Failed to delete category.",
+        type: "error",
+      });
     }
   }
+
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div>
@@ -89,7 +139,6 @@ export default function CategoriesPage() {
         </Link>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
@@ -129,11 +178,10 @@ export default function CategoriesPage() {
               {!loading && categories.map((category) => (
                 <tr key={category.id} className="border-b border-black/10">
                   <td className="px-3 py-4">
-                    <img
-                      src={category.cover_img || "/images/category-placeholder.png"}
-                      alt={category.category_name}
-                      className="h-14 w-14 rounded-lg object-cover border border-gray-300 bg-white"
-                    />
+                  <ImageHoverPreview
+                     src={category.cover_img || "/images/category-placeholder.png"}
+                     alt={category.category_name}
+                  />
                   </td>
 
                   <td className="px-3 py-4 text-[14px] font-medium text-black">
@@ -141,8 +189,8 @@ export default function CategoriesPage() {
                   </td>
 
                   <td className="px-3 py-4 text-[14px] text-[#687280]">
-                    {category.description || "—"}
-                  </td>
+  <TextHoverPreview text={category.description || "—"} />
+</td>
 
                   <td className="px-3 py-4">
                     <div className="flex items-center gap-2">
@@ -173,6 +221,53 @@ export default function CategoriesPage() {
           </table>
         </div>
       </div>
+
+            {/* Pagination */}
+            <div className="mt-6 flex items-center justify-between">
+        <p className="text-sm text-[#687280]">
+          Showing {rangeStart}–{rangeEnd} of {total}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 1}
+            className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft size={16} />
+            Previous
+          </button>
+          <span className="text-sm text-[#687280]">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page === totalPages}
+            className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

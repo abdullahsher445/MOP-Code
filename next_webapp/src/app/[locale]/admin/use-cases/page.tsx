@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import UseCaseTable from "./components/UseCaseTable";
+import ConfirmModal from "@/components/admin/ConfirmModal";
+import AdminToast from "@/components/admin/AdminToast";
 
 function getAuthHeaders() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -19,6 +21,8 @@ function getAuthHeaders() {
   };
 }
 
+const PAGE_SIZE = 10;
+
 export default function UseCasesPage() {
   const { locale } = useParams() as { locale: string };
 
@@ -28,54 +32,106 @@ export default function UseCasesPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
+const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  // Fetch all categories once for the dropdown
   useEffect(() => {
-    const headers = getAuthHeaders();
-    Promise.all([
-      fetch("/api/usecases", { headers }).then((r) => r.json()),
-      fetch("/api/categories", { headers }).then((r) => r.json()),
-    ])
-      .then(([ucJson, catJson]) => {
-        if (ucJson.success) setUsecases(ucJson.data || []);
-        else setError(ucJson.message || ucJson.error || "Failed to load use cases.");
-        if (catJson.success) setCategories(catJson.data || []);
-      })
-      .catch(() => setError("Failed to load data."))
-      .finally(() => setLoading(false));
+    fetch("/api/categories?pageSize=100", { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((json) => { if (json.success) setCategories(json.data || []); })
+      .catch(() => {});
   }, []);
 
-  async function handleDelete(id: number, title: string) {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  // Re-fetch use cases whenever page, search, or category filter changes
+  useEffect(() => {
+    fetchUseCases();
+  }, [page, search, selectedCategory]);
+
+  async function fetchUseCases() {
+    setLoading(true);
+    setError("");
     try {
-      const res = await fetch(`/api/usecases/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(PAGE_SIZE),
       });
+      if (search) params.set("search", search);
+      if (selectedCategory !== "All") params.set("category_id", selectedCategory);
+
+      const res = await fetch(`/api/usecases?${params}`, { headers: getAuthHeaders() });
       const json = await res.json();
-      if (!json.success) {
-        alert(json.message || json.error || "Failed to delete use case.");
-        return;
+      if (json.success) {
+        setUsecases(json.data || []);
+        setTotalPages(json.pagination?.totalPages ?? 1);
+        setTotal(json.pagination?.total ?? 0);
+      } else {
+        setError(json.message || json.error || "Failed to load use cases.");
       }
-      setUsecases((prev) => prev.filter((u) => u.id !== id));
     } catch {
-      alert("Failed to delete use case.");
+      setError("Failed to load data.");
+    } finally {
+      setLoading(false);
     }
   }
 
-  const categoryMap = Object.fromEntries(
-    categories.map((c) => [c.id, c.category_name])
-  );
+  function handleSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
 
-  const filtered = usecases
-    .map((u) => ({ ...u, category_name: categoryMap[u.category_id] ?? "—" }))
-    .filter((u) => {
-      const matchSearch =
-        u.title?.toLowerCase().includes(search.toLowerCase()) ||
-        u.description?.toLowerCase().includes(search.toLowerCase());
-      const matchCat =
-        selectedCategory === "All" || String(u.category_id) === selectedCategory;
-      return matchSearch && matchCat;
-    });
+  function handleCategoryChange(value: string) {
+    setSelectedCategory(value);
+    setPage(1);
+  }
+
+  function handleDelete(id: number, title: string) {
+    setDeleteTarget({ id, title });
+  }
+  
+  async function confirmDeleteUseCase() {
+    if (!deleteTarget) return;
+  
+    try {
+      const res = await fetch(`/api/usecases/${deleteTarget.id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+  
+      const json = await res.json();
+  
+      if (!json.success) {
+        setToast({
+          message: json.message || json.error || "Failed to delete use case.",
+          type: "error",
+        });
+        return;
+      }
+  
+      setToast({ message: "Use case deleted successfully.", type: "success" });
+      setDeleteTarget(null);
+  
+      if (usecases.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        fetchUseCases();
+      }
+    } catch {
+      setToast({ message: "Failed to delete use case.", type: "error" });
+    }
+  }
+
+  const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c.category_name]));
+  const displayData = usecases.map((u) => ({
+    ...u,
+    category_name: categoryMap[u.category_id] ?? "—",
+  }));
+
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div>
@@ -109,7 +165,7 @@ export default function UseCasesPage() {
           <input
             placeholder="Search use cases..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="w-full bg-transparent text-sm outline-none"
           />
         </div>
@@ -117,7 +173,7 @@ export default function UseCasesPage() {
           <Filter size={18} className="text-[#1F8F50]" />
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => handleCategoryChange(e.target.value)}
             className="bg-transparent text-sm outline-none"
           >
             <option value="All">All Categories</option>
@@ -131,11 +187,59 @@ export default function UseCasesPage() {
       </div>
 
       <UseCaseTable
-        data={filtered}
+        data={displayData}
         loading={loading}
         locale={locale}
         onDelete={handleDelete}
       />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <p className="text-sm text-[#687280]">
+            Showing {rangeStart}–{rangeEnd} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 1}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </button>
+            <span className="text-sm text-[#687280]">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page === totalPages}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#CFEFD9] bg-white px-3 py-2 text-sm text-[#1F8F50] transition hover:bg-[#DFF7E8] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+            <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Use Case"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger
+        onConfirm={confirmDeleteUseCase}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {toast && (
+        <AdminToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

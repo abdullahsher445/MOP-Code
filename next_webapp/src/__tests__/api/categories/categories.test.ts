@@ -52,6 +52,8 @@ import { supabase } from '../../../library/supabaseClient';
 import { getAuthUser } from '../../../app/api/library/auth';
 import { validateCreateCategory, validateUpdateCategory } from '../../../models/Category';
 
+const jestExpect = globalThis.expect as unknown as jest.Expect;
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function makeRequest(body?: object, headers?: Record<string, string>, url = 'http://localhost:3000/api/categories') {
@@ -61,6 +63,10 @@ function makeRequest(body?: object, headers?: Record<string, string>, url = 'htt
     json: jest.fn().mockResolvedValue(body ?? {}),
     url,
   } as any;
+}
+
+function makeRouteContext(id: string) {
+  return { params: Promise.resolve({ id }) } as any;
 }
 
 function makeChain(result: { data: unknown; error: unknown; count?: number }) {
@@ -73,9 +79,10 @@ function makeChain(result: { data: unknown; error: unknown; count?: number }) {
   chain.neq        = jest.fn().mockReturnValue(chain);
   chain.ilike      = jest.fn().mockReturnValue(chain);
   chain.order      = jest.fn().mockReturnValue(chain);
+  chain.range      = jest.fn().mockResolvedValue(result);
   chain.single     = jest.fn().mockResolvedValue(result);
   chain.maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
-  // For queries that resolve directly (no .single())
+  // For queries that resolve directly (no .single() or .range())
   Object.defineProperty(chain, 'then', {
     get: () => Promise.resolve(result).then.bind(Promise.resolve(result)),
   });
@@ -123,9 +130,9 @@ describe('POST /api/categories', () => {
     const res = await POST(makeRequest({ category_name: 'Technology', description: 'Tech use cases' }, ADMIN_HEADERS));
     const body = await res.json();
 
-    expect(res.status).toBe(201);
-    expect(body.success).toBe(true);
-    expect(body.message).toBe('Category created successfully');
+    jestExpect(res.status).toBe(201);
+    jestExpect(body.success).toBe(true);
+    jestExpect(body.message).toBe('Category created successfully');
   });
 
   test('non-admin user → 403 forbidden', async () => {
@@ -134,8 +141,8 @@ describe('POST /api/categories', () => {
     const res = await POST(makeRequest({ category_name: 'Technology' }, USER_HEADERS));
     const body = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(body.code).toBe('FORBIDDEN');
+    jestExpect(res.status).toBe(403);
+    jestExpect(body.code).toBe('FORBIDDEN');
   });
 
   test('unauthenticated user → 401 unauthorized', async () => {
@@ -144,8 +151,8 @@ describe('POST /api/categories', () => {
     const res = await POST(makeRequest({ category_name: 'Technology' }));
     const body = await res.json();
 
-    expect(res.status).toBe(401);
-    expect(body.code).toBe('UNAUTHORIZED');
+    jestExpect(res.status).toBe(401);
+    jestExpect(body.code).toBe('UNAUTHORIZED');
   });
 
   test('validation error (empty category name) → 400', async () => {
@@ -155,8 +162,8 @@ describe('POST /api/categories', () => {
     const res = await POST(makeRequest({ category_name: '' }, ADMIN_HEADERS));
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.code).toBe('VALIDATION_ERROR');
+    jestExpect(res.status).toBe(400);
+    jestExpect(body.code).toBe('VALIDATION_ERROR');
   });
 
   test('duplicate category name → 400', async () => {
@@ -174,8 +181,8 @@ describe('POST /api/categories', () => {
     const res = await POST(makeRequest({ category_name: 'Technology' }, ADMIN_HEADERS));
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.code).toBe('DUPLICATE_CATEGORY');
+    jestExpect(res.status).toBe(400);
+    jestExpect(body.code).toBe('DUPLICATE_CATEGORY');
   });
 
   test('DB insert error → 500', async () => {
@@ -193,8 +200,8 @@ describe('POST /api/categories', () => {
     const res = await POST(makeRequest({ category_name: 'Technology' }, ADMIN_HEADERS));
     const body = await res.json();
 
-    expect(res.status).toBe(500);
-    expect(body.success).toBe(false);
+    jestExpect(res.status).toBe(500);
+    jestExpect(body.success).toBe(false);
   });
 
 });
@@ -205,27 +212,21 @@ describe('GET /api/categories', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  test('fetch all categories → 200 success', async () => {
+  test('fetch all categories → 200 with data and pagination metadata', async () => {
     (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
 
     const categories = [MOCK_CATEGORY, { ...MOCK_CATEGORY, id: 2, category_name: 'Health' }];
-
-    (supabase.from as jest.Mock).mockImplementation(() => {
-      const chain: any = {};
-      chain.select = jest.fn().mockReturnValue(chain);
-      chain.order  = jest.fn().mockReturnValue(chain);
-      chain.ilike  = jest.fn().mockReturnValue(chain);
-      // Resolve the query directly
-      chain.then   = undefined;
-      jest.spyOn(chain, 'order').mockResolvedValue({ data: categories, error: null });
-      return chain;
-    });
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: categories, error: null, count: 2 })
+    );
 
     const res = await GET(makeRequest(undefined, ADMIN_HEADERS));
     const body = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
+    jestExpect(res.status).toBe(200);
+    jestExpect(body.success).toBe(true);
+    jestExpect(body.data).toHaveLength(2);
+    jestExpect(body.pagination).toEqual({ page: 1, pageSize: 10, total: 2, totalPages: 1 });
   });
 
   test('unauthenticated request → 401', async () => {
@@ -234,20 +235,16 @@ describe('GET /api/categories', () => {
     const res = await GET(makeRequest(undefined, {}));
     const body = await res.json();
 
-    expect(res.status).toBe(401);
-    expect(body.code).toBe('UNAUTHORIZED');
+    jestExpect(res.status).toBe(401);
+    jestExpect(body.code).toBe('UNAUTHORIZED');
   });
 
   test('fetch with search filter → 200 filtered results', async () => {
     (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
 
-    (supabase.from as jest.Mock).mockImplementation(() => {
-      const chain: any = {};
-      chain.select = jest.fn().mockReturnValue(chain);
-      chain.order  = jest.fn().mockReturnValue(chain);
-      chain.ilike  = jest.fn().mockResolvedValue({ data: [MOCK_CATEGORY], error: null });
-      return chain;
-    });
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: [MOCK_CATEGORY], error: null, count: 1 })
+    );
 
     const res = await GET(makeRequest(
       undefined,
@@ -256,8 +253,94 @@ describe('GET /api/categories', () => {
     ));
     const body = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
+    jestExpect(res.status).toBe(200);
+    jestExpect(body.success).toBe(true);
+    jestExpect(body.data).toHaveLength(1);
+  });
+
+});
+
+// ─── Tests: GET /api/categories - pagination ─────────────────────────────────
+
+describe('GET /api/categories - pagination', () => {
+
+  beforeEach(() => jest.clearAllMocks());
+
+  test('page=2 pageSize=5 → calls range(5, 9) and reflects in metadata', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    const chain = makeChain({ data: [MOCK_CATEGORY], error: null, count: 25 });
+    (supabase.from as jest.Mock).mockReturnValue(chain);
+
+    const res = await GET(makeRequest(
+      undefined,
+      ADMIN_HEADERS,
+      'http://localhost:3000/api/categories?page=2&pageSize=5'
+    ));
+    const body = await res.json();
+
+    jestExpect(chain.range).toHaveBeenCalledWith(5, 9);
+    jestExpect(body.pagination).toEqual({ page: 2, pageSize: 5, total: 25, totalPages: 5 });
+  });
+
+  test('totalPages rounds up correctly (7 items / pageSize=3 → 3 pages)', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: [MOCK_CATEGORY, MOCK_CATEGORY, MOCK_CATEGORY], error: null, count: 7 })
+    );
+
+    const res = await GET(makeRequest(
+      undefined,
+      ADMIN_HEADERS,
+      'http://localhost:3000/api/categories?pageSize=3'
+    ));
+    const body = await res.json();
+
+    jestExpect(body.pagination.totalPages).toBe(3);
+  });
+
+  test('invalid page param falls back to page=1 and calls range(0, 9)', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    const chain = makeChain({ data: [], error: null, count: 0 });
+    (supabase.from as jest.Mock).mockReturnValue(chain);
+
+    const res = await GET(makeRequest(
+      undefined,
+      ADMIN_HEADERS,
+      'http://localhost:3000/api/categories?page=abc'
+    ));
+    const body = await res.json();
+
+    jestExpect(body.pagination.page).toBe(1);
+    jestExpect(chain.range).toHaveBeenCalledWith(0, 9);
+  });
+
+  test('no results → total=0 totalPages=0', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: [], error: null, count: 0 })
+    );
+
+    const res = await GET(makeRequest(undefined, ADMIN_HEADERS));
+    const body = await res.json();
+
+    jestExpect(body.pagination).toEqual({ page: 1, pageSize: 10, total: 0, totalPages: 0 });
+  });
+
+  test('DB error → 500', async () => {
+    (getAuthUser as jest.Mock).mockReturnValue({ userId: 9, isAuthenticated: true, isAdmin: true });
+
+    (supabase.from as jest.Mock).mockReturnValue(
+      makeChain({ data: null, error: { message: 'Connection failed' }, count: undefined })
+    );
+
+    await GET(makeRequest(undefined, ADMIN_HEADERS));
+
+    const { errorResponse } = require('../../../app/api/library/errorResponse');
+    jestExpect(errorResponse).toHaveBeenCalledWith('Failed to fetch categories', 500, 'DB_FETCH_ERROR');
   });
 
 });
@@ -286,13 +369,13 @@ describe('PUT /api/categories/[id]', () => {
 
     const res = await PUT(
       makeRequest({ category_name: 'Updated Tech' }, ADMIN_HEADERS),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.message).toBe('Category updated successfully');
+    jestExpect(res.status).toBe(200);
+    jestExpect(body.success).toBe(true);
+    jestExpect(body.message).toBe('Category updated successfully');
   });
 
   test('non-admin → 403 forbidden', async () => {
@@ -300,12 +383,12 @@ describe('PUT /api/categories/[id]', () => {
 
     const res = await PUT(
       makeRequest({ category_name: 'Updated' }, USER_HEADERS),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(body.code).toBe('FORBIDDEN');
+    jestExpect(res.status).toBe(403);
+    jestExpect(body.code).toBe('FORBIDDEN');
   });
 
   test('unauthenticated → 401', async () => {
@@ -313,12 +396,12 @@ describe('PUT /api/categories/[id]', () => {
 
     const res = await PUT(
       makeRequest({ category_name: 'Updated' }, {}),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(401);
-    expect(body.code).toBe('UNAUTHORIZED');
+    jestExpect(res.status).toBe(401);
+    jestExpect(body.code).toBe('UNAUTHORIZED');
   });
 
   test('invalid ID → 400', async () => {
@@ -326,12 +409,12 @@ describe('PUT /api/categories/[id]', () => {
 
     const res = await PUT(
       makeRequest({ category_name: 'Updated' }, ADMIN_HEADERS),
-      { params: { id: 'abc' } }
+      makeRouteContext('abc')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.code).toBe('INVALID_ID');
+    jestExpect(res.status).toBe(400);
+    jestExpect(body.code).toBe('INVALID_ID');
   });
 
   test('validation error → 400', async () => {
@@ -340,12 +423,12 @@ describe('PUT /api/categories/[id]', () => {
 
     const res = await PUT(
       makeRequest({ category_name: '' }, ADMIN_HEADERS),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.code).toBe('VALIDATION_ERROR');
+    jestExpect(res.status).toBe(400);
+    jestExpect(body.code).toBe('VALIDATION_ERROR');
   });
 
   test('category not found → 404', async () => {
@@ -357,12 +440,12 @@ describe('PUT /api/categories/[id]', () => {
 
     const res = await PUT(
       makeRequest({ category_name: 'Updated' }, ADMIN_HEADERS),
-      { params: { id: '999' } }
+      makeRouteContext('999')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(404);
-    expect(body.code).toBe('NOT_FOUND');
+    jestExpect(res.status).toBe(404);
+    jestExpect(body.code).toBe('NOT_FOUND');
   });
 
   test('duplicate category name → 400', async () => {
@@ -379,12 +462,12 @@ describe('PUT /api/categories/[id]', () => {
 
     const res = await PUT(
       makeRequest({ category_name: 'Health' }, ADMIN_HEADERS),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.code).toBe('DUPLICATE_CATEGORY');
+    jestExpect(res.status).toBe(400);
+    jestExpect(body.code).toBe('DUPLICATE_CATEGORY');
   });
 
 });
@@ -406,13 +489,13 @@ describe('DELETE /api/categories/[id]', () => {
 
     const res = await DELETE(
       makeRequest(undefined, ADMIN_HEADERS),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.message).toBe('Category deleted successfully');
+    jestExpect(res.status).toBe(200);
+    jestExpect(body.success).toBe(true);
+    jestExpect(body.message).toBe('Category deleted successfully');
   });
 
   test('non-admin → 403 forbidden', async () => {
@@ -420,12 +503,12 @@ describe('DELETE /api/categories/[id]', () => {
 
     const res = await DELETE(
       makeRequest(undefined, USER_HEADERS),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(403);
-    expect(body.code).toBe('FORBIDDEN');
+    jestExpect(res.status).toBe(403);
+    jestExpect(body.code).toBe('FORBIDDEN');
   });
 
   test('unauthenticated → 401', async () => {
@@ -433,12 +516,12 @@ describe('DELETE /api/categories/[id]', () => {
 
     const res = await DELETE(
       makeRequest(undefined, {}),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(401);
-    expect(body.code).toBe('UNAUTHORIZED');
+    jestExpect(res.status).toBe(401);
+    jestExpect(body.code).toBe('UNAUTHORIZED');
   });
 
   test('invalid ID → 400', async () => {
@@ -446,12 +529,12 @@ describe('DELETE /api/categories/[id]', () => {
 
     const res = await DELETE(
       makeRequest(undefined, ADMIN_HEADERS),
-      { params: { id: 'abc' } }
+      makeRouteContext('abc')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.code).toBe('INVALID_ID');
+    jestExpect(res.status).toBe(400);
+    jestExpect(body.code).toBe('INVALID_ID');
   });
 
   test('category not found → 404', async () => {
@@ -463,12 +546,12 @@ describe('DELETE /api/categories/[id]', () => {
 
     const res = await DELETE(
       makeRequest(undefined, ADMIN_HEADERS),
-      { params: { id: '999' } }
+      makeRouteContext('999')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(404);
-    expect(body.code).toBe('CATEGORY_NOT_FOUND');
+    jestExpect(res.status).toBe(404);
+    jestExpect(body.code).toBe('CATEGORY_NOT_FOUND');
   });
 
   test('category in use by use cases → 400', async () => {
@@ -482,12 +565,12 @@ describe('DELETE /api/categories/[id]', () => {
 
     const res = await DELETE(
       makeRequest(undefined, ADMIN_HEADERS),
-      { params: { id: '1' } }
+      makeRouteContext('1')
     );
     const body = await res.json();
 
-    expect(res.status).toBe(400);
-    expect(body.code).toBe('CATEGORY_IN_USE');
+    jestExpect(res.status).toBe(400);
+    jestExpect(body.code).toBe('CATEGORY_IN_USE');
   });
 
 });

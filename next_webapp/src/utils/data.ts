@@ -1,3 +1,4 @@
+
 export const useCases = [
   {
     id: "business-and-economy",
@@ -296,7 +297,7 @@ export const useCases = [
         link: "",
       },
       {
-        heading: "Parking slot occupany",
+        heading: "Parking slot occupancy",
         description:
           "Enhance city transit systems using passenger and route data.",
         image: "/img/2bafb41a2f7d47daa950025568befe0218893c90-2880x1440.avif",
@@ -319,7 +320,7 @@ export const useCases = [
     ],
   },
   {
-    id: "urban-planing-and-development",
+    id: "urban-planning-and-development",
     title: "Urban Planning and Development",
     description:
       "Design smarter cities by integrating AI, IoT, and sustainable planning to optimize infrastructure and resources.",
@@ -384,7 +385,7 @@ export const useCases = [
     ],
   },
   {
-    id: "helth-and-wellbeign",
+    id: "health-and-wellbeing",
     title: "Health and Wellbeing",
     description:
       "Utilize predictive analytics and AI to enhance healthcare outcomes and promote overall wellbeing.",
@@ -434,28 +435,28 @@ export const recentCaseStudies = [
     id: "biotechnology",
     title: "Biotechnology",
     description:
-      "Explore how biotechnology leverages Melbourne's open data to drive innovation in healthcare, research, and sustainable solutions. - dummy data",
+      "A data-powered biotechnology solution that supports smarter healthcare research, precision analysis, and evidence-based innovation outcomes.",
     image: "/img/biotech.jpeg",
   },
   {
     id: "oil-supply-management",
     title: "Oil Supply Management",
     description:
-      "Analyze supply chain efficiency and demand forecasting in oil distribution using data-driven insights from Melbourne. - dummy data",
+      "A smart oil supply solution that improves demand forecasting, monitors distribution flow, and reduces operational inefficiencies in real time.",
     image: "/img/Oil-Supply.jpg",
   },
   {
     id: "gas-supply-management",
     title: "Gas Supply Management",
     description:
-      "Utilize real-time data to optimize gas supply networks, improve distribution, and ensure energy sustainability. - dummy data",
+      "A real-time gas network solution that optimizes pipeline distribution, improves reliability, and supports more sustainable energy planning.",
     image: "/img/gas-supply.png",
   },
   {
     id: "education",
     title: "Education",
     description:
-      "Enhance learning outcomes through data-driven decision-making and smart education systems powered by Melbourne's open data. - dummy data",
+      "A data-informed education solution that helps improve learning outcomes, identify student needs, and guide smarter teaching decisions.",
     image: "/img/education.jpg",
   },
 ];

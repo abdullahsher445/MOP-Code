@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
+
 interface ActivityEntry {
   id: number;
   activity: string;
@@ -7,121 +9,154 @@ interface ActivityEntry {
   performedAt: string;
 }
 
-// TODO: Replace with real data from API endpoint (e.g. GET /api/admin/activity-history)
-const activityData: ActivityEntry[] = [
-  {
-    id: 1,
-    activity: "Created new category: Urban Planning",
-    performedBy: "admin@mop.com",
-    performedAt: "15 May 2026, 2:30 PM",
-  },
-  {
-    id: 2,
-    activity: "Updated use case: Smart Parking Sensors",
-    performedBy: "sachin@mop.com",
-    performedAt: "15 May 2026, 1:45 PM",
-  },
-  {
-    id: 3,
-    activity: "Published blog post: Pedestrian Counting Network",
-    performedBy: "admin@mop.com",
-    performedAt: "14 May 2026, 4:20 PM",
-  },
-  {
-    id: 4,
-    activity: "Deleted blog post: Draft - Old Transport Data",
-    performedBy: "sachin@mop.com",
-    performedAt: "14 May 2026, 11:10 AM",
-  },
-  {
-    id: 5,
-    activity: "Added new use case: Crime-Aware Cycling Planner",
-    performedBy: "admin@mop.com",
-    performedAt: "13 May 2026, 3:55 PM",
-  },
-  {
-    id: 6,
-    activity: "Updated category: Transport & Mobility",
-    performedBy: "sachin@mop.com",
-    performedAt: "13 May 2026, 10:30 AM",
-  },
-  {
-    id: 7,
-    activity: "Uploaded gallery image: Flinders Street Station",
-    performedBy: "admin@mop.com",
-    performedAt: "12 May 2026, 2:15 PM",
-  },
-  {
-    id: 8,
-    activity: "Created new blog post: Urban Forest Tree Data",
-    performedBy: "sachin@mop.com",
-    performedAt: "12 May 2026, 9:45 AM",
-  },
-  {
-    id: 9,
-    activity: "Updated user role: reviewer@mop.com to Editor",
-    performedBy: "admin@mop.com",
-    performedAt: "11 May 2026, 5:00 PM",
-  },
-  {
-    id: 10,
-    activity: "Deleted use case: Outdated Parking Analysis",
-    performedBy: "sachin@mop.com",
-    performedAt: "11 May 2026, 8:20 AM",
-  },
-];
+function authHeaders(): Record<string, string> {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const token: string = user.token ?? "";
+  return {
+    "x-user-id": String(user.userId ?? user.id ?? ""),
+    "x-user-role-id": String(user.roleId ?? user.role_id ?? ""),
+    "x-user-role": user.roleName ?? user.role_name ?? "",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+const PAGE_SIZE = 20;
 
 export default function ActivityHistoryPage() {
+  const [entries, setEntries] = useState<ActivityEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const fetchActivity = useCallback(async (currentPage: number, searchTerm: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ page: String(currentPage), pageSize: String(PAGE_SIZE) });
+      if (searchTerm) params.set("search", searchTerm);
+
+      const res = await fetch(`/api/admin/activity-history?${params}`, { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || "Failed to fetch activity");
+      setEntries(json.data || []);
+      setTotal(json.pagination.total);
+      setTotalPages(json.pagination.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch activity");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchActivity(page, search);
+  }, [page, search, fetchActivity]);
+
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleString("en-AU", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+
   return (
-    // ml offsets the absolute-positioned sidebar on mobile/tablet (120px open → 120-32=88px extra needed;
-    // 180px on md → 180-32=148px). lg+ uses the flex-flow desktop sidebar so no offset needed.
     <div className="ml-[88px] md:ml-[148px] lg:ml-0">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-[40px] font-semibold leading-[48px] text-[#2DBE6C]">
-          Activity History
-        </h1>
+        <h1 className="text-[40px] font-semibold leading-[48px] text-[#2DBE6C]">Activity History</h1>
         <p className="mt-2 text-[16px] leading-[24px] text-[#687280]">
           Track all admin activities and changes
         </p>
       </div>
 
+      {/* Search */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search by user name..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+        />
+        {!loading && total > 0 && (
+          <span className="text-sm text-[#687280]">{total} activit{total !== 1 ? "ies" : "y"}</span>
+        )}
+      </div>
+
       {/* Table */}
       <div className="rounded-2xl bg-[#ECEAEA] p-5">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-black/30">
-                <th className="min-w-[250px] px-3 py-4 text-left text-[14px] font-semibold text-black">
-                  Activity Performed
-                </th>
-                <th className="px-3 py-4 text-left text-[14px] font-semibold text-black">
-                  Performed By
-                </th>
-                <th className="px-3 py-4 text-left text-[14px] font-semibold text-black">
-                  Performed At
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {activityData.map((entry) => (
-                <tr key={entry.id} className="border-b border-black/10">
-                  <td className="min-w-[250px] px-3 py-4 text-[14px] font-medium text-black">
-                    {entry.activity}
-                  </td>
-                  <td className="px-3 py-4 text-[14px] text-[#687280]">
-                    {entry.performedBy}
-                  </td>
-                  <td className="px-3 py-4 text-[14px] text-[#687280]">
-                    {entry.performedAt}
-                  </td>
+        {loading ? (
+          <div className="py-16 text-center text-sm text-[#687280]">Loading...</div>
+        ) : error ? (
+          <div className="py-16 text-center text-sm text-red-500">{error}</div>
+        ) : entries.length === 0 ? (
+          <div className="py-16 text-center text-sm text-[#687280]">No activity found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-black/30">
+                  <th className="min-w-[280px] px-3 py-4 text-left text-[14px] font-semibold text-black">
+                    Activity Performed
+                  </th>
+                  <th className="px-3 py-4 text-left text-[14px] font-semibold text-black">
+                    Performed By
+                  </th>
+                  <th className="px-3 py-4 text-left text-[14px] font-semibold text-black">
+                    Performed At
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="border-b border-black/10">
+                    <td className="min-w-[280px] px-3 py-4 text-[14px] font-medium text-black">
+                      {entry.activity}
+                    </td>
+                    <td className="px-3 py-4 text-[14px] text-[#687280]">{entry.performedBy}</td>
+                    <td className="px-3 py-4 text-[14px] text-[#687280]">{formatTime(entry.performedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <span className="text-[#687280]">Page {page} of {totalPages}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 disabled:opacity-40 hover:bg-gray-100"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 disabled:opacity-40 hover:bg-gray-100"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

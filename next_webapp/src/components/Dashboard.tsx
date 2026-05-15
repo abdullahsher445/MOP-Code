@@ -908,10 +908,6 @@ const Dashboard = () => {
 	// Hero search: Title / Content / Tag (see HERO_SEARCH_MODES)
 	const searchContainerRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		handleSearch("", SEARCH_MODE.TITLE, CATEGORY.ALL);
-	}, []);
-
 	// Live hero search: debounce 350ms, fetch top 5 matching usecases for dropdown
 	useEffect(() => {
 		if (!searchTerm.trim()) {
@@ -1105,7 +1101,7 @@ const Dashboard = () => {
 	const clearSearch = () => {
 		setSearchTerm("");
 		setShowSearchResults(false);
-		handleSearch("", SEARCH_MODE.TITLE, CATEGORY.ALL);
+		setFilteredCaseStudies([]);
 	};
 
 	return (

@@ -8,6 +8,7 @@ import {
 import { errorResponse } from "@/app/api/library/errorResponse";
 import { getAuthUser } from "@/app/api/library/auth";
 import { NextRequest } from "next/server";
+import logger from "@/utils/logger";
 
 // ==============================
 // POST /api/categories
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
 
         if (checkError) {
-            console.error("Duplicate Check Error:", checkError);
+            logger.error(`Duplicate Check Error: ${checkError.message || String(checkError)}`);
             return errorResponse(
                 "Failed to validate category",
                 500,
@@ -98,11 +99,11 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (userError) {
-            console.error("User fetch error:", userError);
+            logger.error(`User fetch error: ${userError.message || String(userError)}`);
         }
 
         if (error) {
-            console.error("Supabase Insert Error:", error);
+            logger.error(`Supabase Insert Error: ${error.message || String(error)}`);
             return errorResponse(
                 "Failed to create category",
                 500,
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error) {
-        console.error("Create Category Error:", error);
+        logger.error(`Create Category Error: ${error instanceof Error ? error.message : String(error)}`);
 
         return errorResponse(
             "Internal Server Error",
@@ -170,7 +171,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query.range(from, to);
 
     if (error) {
-      console.error("[GET /api/categories] fetch error:", error);
+      logger.error(`[GET /api/categories] fetch error: ${error.message || String(error)}`);
       return errorResponse("Failed to fetch categories", 500, "DB_FETCH_ERROR");
     }
 
@@ -190,7 +191,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("[GET /api/categories] unexpected error:", error);
+    logger.error(`[GET /api/categories] unexpected error: ${error instanceof Error ? error.message : String(error)}`);
     return errorResponse("Internal Server Error", 500, "INTERNAL_ERROR");
   }
 }

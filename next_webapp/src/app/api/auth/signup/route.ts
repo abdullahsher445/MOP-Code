@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/library/supabaseClient';
 import bcrypt from 'bcryptjs';
 import { errorResponse } from '@/app/api/library/errorResponse';
+import logger from '@/utils/logger';
 
 export async function POST(request: Request) {
     try {
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
         );
 
     } catch (error) {
-        console.error('Signup Error:', error);
-        return errorResponse('Internal Server Error', 500, 'INTERNAL_ERROR');
+        logger.error(`Signup Error: ${error instanceof Error ? error.message : String(error)}`);
+        return errorResponse('Internal Server Error', 500, 'INTERNAL_ERROR', request);
     }
 }

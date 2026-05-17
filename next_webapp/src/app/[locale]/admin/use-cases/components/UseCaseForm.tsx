@@ -1,10 +1,31 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Save, ImagePlus } from "lucide-react";
+import { useRef, useState } from "react";
+import { Save, ImagePlus, FileText } from "lucide-react";
 
-export default function UseCaseForm({ initialData, onSubmit }: any) {
-  const [form, setForm] = useState(
+type UseCaseFormData = {
+  serialNumber: string;
+  title: string;
+  category: string;
+  description: string;
+  image: string | File;
+  document: File | null;
+};
+
+type UseCaseFormProps = {
+  initialData?: UseCaseFormData;
+  onSubmit: (data: UseCaseFormData) => void;
+};
+
+type FormErrors = {
+  document?: string;
+};
+
+export default function UseCaseForm({
+  initialData,
+  onSubmit,
+}: UseCaseFormProps) {
+  const [form, setForm] = useState<UseCaseFormData>(
     initialData || {
       serialNumber: "",
       title: "",
@@ -15,101 +36,108 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
     }
   );
 
-  const [preview, setPreview] = useState(form.image || "");
+  const [preview, setPreview] = useState(
+    typeof form.image === "string" ? form.image : ""
+  );
+
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const documentInputRef = useRef<HTMLInputElement>(null); 
+  const documentInputRef = useRef<HTMLInputElement>(null);
 
-  // image handler
   const handleFile = (file: File) => {
     const imageUrl = URL.createObjectURL(file);
     setPreview(imageUrl);
 
-    setForm({
-      ...form,
+    setForm((prev) => ({
+      ...prev,
       image: file,
-    });
+    }));
   };
 
-  // document handler
   const handleDocument = (file: File) => {
     const allowedTypes = ["text/html", "application/pdf"];
 
     if (!allowedTypes.includes(file.type)) {
-      setErrors((prev: any) => ({
+      setErrors((prev) => ({
         ...prev,
         document: "Only HTML and PDF files are allowed",
       }));
       return;
     }
 
-    setForm({
-      ...form,
+    setErrors((prev) => ({
+      ...prev,
+      document: undefined,
+    }));
+
+    setForm((prev) => ({
+      ...prev,
       document: file,
-    });
+    }));
   };
 
-  // drop handler
-  const handleDrop = (e: any) => 
-  {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+
     if (e.dataTransfer.files?.[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
   };
 
-  // submit
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(form);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-
+    <form onSubmit={handleSubmit} className="w-full space-y-5 sm:space-y-6">
       {/* Serial Number */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <label className="mb-2 block text-sm font-medium text-[#1A1A1A]">
           Serial Number
         </label>
+
         <input
           type="text"
           value={form.serialNumber}
           onChange={(e) =>
-            setForm({ ...form, serialNumber: e.target.value })
+            setForm((prev) => ({ ...prev, serialNumber: e.target.value }))
           }
           placeholder="Enter serial number"
-          className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 focus:border-[#2DBE6C] focus:bg-white outline-none"
+          className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm outline-none transition-colors focus:border-[#2DBE6C] focus:bg-white focus:ring-2 focus:ring-[#2DBE6C]/20"
         />
       </div>
 
       {/* Title */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <label className="mb-2 block text-sm font-medium text-[#1A1A1A]">
           Title
         </label>
+
         <input
           type="text"
           value={form.title}
           onChange={(e) =>
-            setForm({ ...form, title: e.target.value })
+            setForm((prev) => ({ ...prev, title: e.target.value }))
           }
           placeholder="Enter title"
-          className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 focus:border-[#2DBE6C] focus:bg-white outline-none"
+          className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm outline-none transition-colors focus:border-[#2DBE6C] focus:bg-white focus:ring-2 focus:ring-[#2DBE6C]/20"
         />
       </div>
 
       {/* Category */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <label className="mb-2 block text-sm font-medium text-[#1A1A1A]">
           Category
         </label>
+
         <select
           value={form.category}
           onChange={(e) =>
-            setForm({ ...form, category: e.target.value })
+            setForm((prev) => ({ ...prev, category: e.target.value }))
           }
-          className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 outline-none focus:border-[#2DBE6C]"
+          className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm outline-none transition-colors focus:border-[#2DBE6C] focus:bg-white focus:ring-2 focus:ring-[#2DBE6C]/20"
         >
           <option value="">Select category</option>
           <option value="Category 1">Category 1</option>
@@ -120,23 +148,24 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
 
       {/* Description */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <label className="mb-2 block text-sm font-medium text-[#1A1A1A]">
           Description
         </label>
+
         <textarea
           rows={4}
           value={form.description}
           onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
+            setForm((prev) => ({ ...prev, description: e.target.value }))
           }
           placeholder="Enter description"
-          className="w-full rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 focus:border-[#2DBE6C] focus:bg-white outline-none"
+          className="w-full resize-none rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm outline-none transition-colors focus:border-[#2DBE6C] focus:bg-white focus:ring-2 focus:ring-[#2DBE6C]/20"
         />
       </div>
 
-      {/* image upload*/}
+      {/* Cover Image Upload */}
       <div>
-        <label className="mb-3 block text-sm font-medium">
+        <label className="mb-3 block text-sm font-medium text-[#1A1A1A]">
           Cover Image
         </label>
 
@@ -144,25 +173,27 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className="cursor-pointer rounded-2xl border-2 border-dashed border-[#CFEFD9] bg-[#F8FFFA] p-8 text-center hover:bg-[#F0FFF6]"
+          className="cursor-pointer rounded-2xl border-2 border-dashed border-[#CFEFD9] bg-[#F8FFFA] px-4 py-8 text-center transition-colors hover:bg-[#F0FFF6] sm:p-8"
         >
           {!preview ? (
             <>
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAFBF0] text-[#1F8F50]">
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAFBF0] text-[#1F8F50] sm:h-12 sm:w-12">
                 <ImagePlus size={22} />
               </div>
-              <p className="mt-3 text-sm font-semibold">
+
+              <p className="mt-3 text-sm font-semibold text-[#1A1A1A]">
                 Upload image
               </p>
-              <p className="text-sm text-[#687280]">
-                Drag & drop or click to browse
+
+              <p className="mt-1 text-sm leading-5 text-[#687280]">
+                Drag and drop or click to browse.
               </p>
             </>
           ) : (
             <img
               src={preview}
-              alt="preview"
-              className="mx-auto h-40 rounded-lg object-cover"
+              alt="Preview"
+              className="mx-auto max-h-48 max-w-full rounded-lg object-contain"
             />
           )}
         </div>
@@ -172,15 +203,17 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
           ref={fileInputRef}
           className="hidden"
           accept="image/*"
-          onChange={(e) =>
-            e.target.files && handleFile(e.target.files[0])
-          }
+          onChange={(e) => {
+            if (e.target.files?.[0]) {
+              handleFile(e.target.files[0]);
+            }
+          }}
         />
       </div>
 
-      {/* document upload */}
+      {/* Document Upload */}
       <div>
-        <label className="mb-3 block text-sm font-medium">
+        <label className="mb-3 block text-sm font-medium text-[#1A1A1A]">
           Upload HTML / PDF
         </label>
 
@@ -188,31 +221,35 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
+
             if (e.dataTransfer.files?.[0]) {
               handleDocument(e.dataTransfer.files[0]);
             }
           }}
           onClick={() => documentInputRef.current?.click()}
-          className="cursor-pointer rounded-2xl border-2 border-dashed border-[#CFEFD9] bg-[#F8FFFA] p-8 text-center hover:bg-[#F0FFF6]"
+          className="cursor-pointer rounded-2xl border-2 border-dashed border-[#CFEFD9] bg-[#F8FFFA] px-4 py-8 text-center transition-colors hover:bg-[#F0FFF6] sm:p-8"
         >
           {!form.document ? (
             <>
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#EAFBF0] text-[#1F8F50]">
-                📄
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAFBF0] text-[#1F8F50] sm:h-12 sm:w-12">
+                <FileText size={22} />
               </div>
-              <p className="mt-3 text-sm font-semibold">
+
+              <p className="mt-3 text-sm font-semibold text-[#1A1A1A]">
                 Upload HTML or PDF
               </p>
-              <p className="text-sm text-[#687280]">
-                Drag & drop or click to browse
+
+              <p className="mt-1 text-sm leading-5 text-[#687280]">
+                Drag and drop or click to browse.
               </p>
             </>
           ) : (
-            <p className="text-sm font-medium text-[#1F8F50]">
+            <p className="break-words text-sm font-medium text-[#1F8F50]">
               {form.document.name}
             </p>
           )}
         </div>
+
         {errors.document && (
           <p className="mt-1 text-sm text-red-500">{errors.document}</p>
         )}
@@ -222,18 +259,24 @@ export default function UseCaseForm({ initialData, onSubmit }: any) {
           ref={documentInputRef}
           className="hidden"
           accept=".html,.pdf"
-          onChange={(e) =>
-            e.target.files && handleDocument(e.target.files[0])
-          }
+          onChange={(e) => {
+            if (e.target.files?.[0]) {
+              handleDocument(e.target.files[0]);
+            }
+          }}
         />
       </div>
 
       {/* Submit */}
-      <button className="flex items-center gap-2 rounded-full bg-[#2DBE6C] px-6 py-3 text-white hover:bg-[#1F8F50]">
-        <Save size={18} />
-        Save Use Case
-      </button>
-
+      <div className="pt-2">
+        <button
+          type="submit"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#2DBE6C] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#1F8F50] sm:w-auto"
+        >
+          <Save size={18} />
+          Save Use Case
+        </button>
+      </div>
     </form>
   );
 }

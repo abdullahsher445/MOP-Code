@@ -69,29 +69,30 @@ export default function DashboardPage() {
   const displayValue = (value: string) => (loading ? "…" : value);
 
   return (
-    <div className="p-6">
-      {/* Title */}
-      <h1 className="mb-10 text-[40px] font-semibold leading-[48px] text-[#2DBE6C]">
+    <div className="w-full max-w-full overflow-hidden">
+      <h1 className="mb-6 text-3xl font-semibold leading-tight text-[#2DBE6C] sm:mb-8 sm:text-4xl lg:mb-10 lg:text-[40px] lg:leading-[48px]">
         Dashboard
       </h1>
 
-      {/* Cards Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AdminStatCard
           title="Total Categories"
           value={displayValue(totalCategories)}
           icon={<LayoutGrid size={32} />}
         />
+
         <AdminStatCard
           title="Use Cases"
           value={displayValue(totalUseCases)}
           icon={<Folder size={32} />}
         />
+
         <AdminStatCard
           title="Total Blogs"
           value={displayValue(totalBlogs)}
           icon={<BookOpen size={32} />}
         />
+
         <AdminStatCard
           title="Gallery Photos"
           value={displayValue(totalGallery)}
@@ -99,8 +100,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Recent Activity */}
-      <div className="mt-12">
+      <div className="mt-6 sm:mt-8">
         <AdminRecentActivity />
       </div>
     </div>

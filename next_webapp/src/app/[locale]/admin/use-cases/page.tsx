@@ -1,221 +1,144 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { Plus, Search, Filter } from "lucide-react";
 import UseCaseTable from "./components/UseCaseTable";
-import ConfirmModal from "@/components/admin/ConfirmModal";
-import AdminToast from "@/components/admin/AdminToast";
-import Pagination from "@/components/Pagination";
 
-function getAuthHeaders() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const userId = user.userId ?? user.id ?? "";
-  const roleId = user.roleId ?? user.role_id ?? "";
-  const token = user.token ?? "";
-  return {
-    "x-user-id": String(userId),
-    "x-user-role-id": String(roleId),
-    "x-user-role": user.roleName ?? user.role_name ?? "",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+type UseCaseItem = {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  image: string;
+};
 
-const PAGE_SIZE = 10;
+const initialUseCases: UseCaseItem[] = [
+  {
+    id: 1,
+    title: "Business and Economy",
+    description:
+      "Analyze market trends and financial data to optimize business strategies.",
+    category: "Category 1",
+    image: "/images/category-placeholder.png",
+  },
+  {
+    id: 2,
+    title: "Community and Social Impact",
+    description:
+      "Develop initiatives to enhance social welfare and community outcomes.",
+    category: "Category 2",
+    image: "/images/category-placeholder.png",
+  },
+  {
+    id: 3,
+    title: "Education and Teaching",
+    description:
+      "Leverage AI tools to improve learning and personalize education.",
+    category: "Category 1",
+    image: "/images/category-placeholder.png",
+  },
+  {
+    id: 4,
+    title: "Environmental Sustainability",
+    description:
+      "Implement eco-friendly strategies to protect natural resources.",
+    category: "Category 3",
+    image: "/images/category-placeholder.png",
+  },
+];
 
-export default function UseCasesPage() {
-  const { locale } = useParams() as { locale: string };
-
-  const [usecases, setUsecases] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+export default function UseCasesPage({
+  params,
+}: {
+  params: { locale: string };
+}) {
+  const [data, setData] = useState<UseCaseItem[]>(initialUseCases);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
-const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Fetch all categories once for the dropdown
-  useEffect(() => {
-    fetch("/api/categories?pageSize=100", { headers: getAuthHeaders() })
-      .then((r) => r.json())
-      .then((json) => { if (json.success) setCategories(json.data || []); })
-      .catch(() => {});
-  }, []);
+  const categories = Array.from(new Set(data.map((item) => item.category)));
 
-  // Re-fetch use cases whenever page, search, or category filter changes
-  useEffect(() => {
-    fetchUseCases();
-  }, [page, search, selectedCategory]);
-
-  async function fetchUseCases() {
-    setLoading(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(PAGE_SIZE),
-      });
-      if (search) params.set("search", search);
-      if (selectedCategory !== "All") params.set("category_id", selectedCategory);
-
-      const res = await fetch(`/api/usecases?${params}`, { headers: getAuthHeaders() });
-      const json = await res.json();
-      if (json.success) {
-        setUsecases(json.data || []);
-        setTotalPages(json.pagination?.totalPages ?? 1);
-        setTotal(json.pagination?.total ?? 0);
-      } else {
-        setError(json.message || json.error || "Failed to load use cases.");
-      }
-    } catch {
-      setError("Failed to load data.");
-    } finally {
-      setLoading(false);
+  const handleDelete = (id: number | string) => {
+    if (confirm("Are you sure you want to delete this use case?")) {
+      setData((prev) => prev.filter((item) => item.id !== Number(id)));
     }
-  }
+  };
 
-  function handleSearch(value: string) {
-    setSearch(value);
-    setPage(1);
-  }
+  const filteredData = data.filter((item) => {
+    const searchValue = search.toLowerCase();
 
-  function handleCategoryChange(value: string) {
-    setSelectedCategory(value);
-    setPage(1);
-  }
+    const matchesSearch =
+      item.title.toLowerCase().includes(searchValue) ||
+      item.description.toLowerCase().includes(searchValue);
 
-  function handleDelete(id: number, title: string) {
-    setDeleteTarget({ id, title });
-  }
-  
-  async function confirmDeleteUseCase() {
-    if (!deleteTarget) return;
-  
-    try {
-      const res = await fetch(`/api/usecases/${deleteTarget.id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      });
-  
-      const json = await res.json();
-  
-      if (!json.success) {
-        setToast({
-          message: json.message || json.error || "Failed to delete use case.",
-          type: "error",
-        });
-        return;
-      }
-  
-      setToast({ message: "Use case deleted successfully.", type: "success" });
-      setDeleteTarget(null);
-  
-      if (usecases.length === 1 && page > 1) {
-        setPage((p) => p - 1);
-      } else {
-        fetchUseCases();
-      }
-    } catch {
-      setToast({ message: "Failed to delete use case.", type: "error" });
-    }
-  }
+    const matchesCategory =
+      selectedCategory === "All" || item.category === selectedCategory;
 
-  const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c.category_name]));
-  const displayData = usecases.map((u) => ({
-    ...u,
-    category_name: categoryMap[u.category_id] ?? "—",
-  }));
+    return matchesSearch && matchesCategory;
+  });
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+    <div className="w-full max-w-full overflow-hidden">
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-[40px] font-semibold text-[#2DBE6C]">Use Cases</h1>
-          <p className="mt-2 text-[16px] text-[#687280]">
-            Manage and organize your use cases
+          <h1 className="text-3xl font-semibold leading-tight text-[#2DBE6C] sm:text-4xl lg:text-[40px] lg:leading-[48px]">
+            Use Cases
+          </h1>
+
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#687280] sm:text-base">
+            Manage and organize your use cases.
           </p>
         </div>
+
         <Link
-          href={`/${locale}/admin/use-cases/add`}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#1F8F50] px-5 py-3 text-[14px] font-medium text-white transition hover:bg-[#2DBE6C]"
+          href={`/${params.locale}/admin/use-cases/add`}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#1F8F50] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#2DBE6C] sm:w-auto"
         >
           <Plus size={18} />
           Add New
         </Link>
       </div>
 
-      {error && (
-        <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-[1fr_240px]">
+        <div className="flex min-w-0 items-center gap-2 rounded-xl border border-[#CFEFD9] bg-[#F8FFFA] px-4 py-3">
+          <Search size={18} className="shrink-0 text-[#1F8F50]" />
 
-      {/* Search + Filter */}
-      <div className="mb-6 flex flex-col gap-3 md:flex-row">
-        <div className="flex flex-1 items-center gap-2 rounded-xl border border-[#CFEFD9] bg-[#F8FFFA] px-4 py-3">
-          <Search size={18} className="text-[#1F8F50]" />
           <input
+            type="text"
             placeholder="Search use cases..."
             value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full bg-transparent text-sm outline-none"
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full min-w-0 bg-transparent text-sm outline-none"
           />
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-[#CFEFD9] bg-[#F8FFFA] px-4 py-3">
-          <Filter size={18} className="text-[#1F8F50]" />
+
+        <div className="flex min-w-0 items-center gap-2 rounded-xl border border-[#CFEFD9] bg-[#F8FFFA] px-4 py-3">
+          <Filter size={18} className="shrink-0 text-[#1F8F50]" />
+
           <select
             value={selectedCategory}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="bg-transparent text-sm outline-none"
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full min-w-0 bg-transparent text-sm outline-none"
           >
             <option value="All">All Categories</option>
-            {categories.map((c) => (
-              <option key={c.id} value={String(c.id)}>
-                {c.category_name}
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      <UseCaseTable
-        data={displayData}
-        loading={loading}
-        locale={locale}
-        onDelete={handleDelete}
-      />
-
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        total={total}
-        pageSize={PAGE_SIZE}
-        variant="admin"
-      />
-            <ConfirmModal
-        open={!!deleteTarget}
-        title="Delete Use Case"
-        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        isDanger
-        onConfirm={confirmDeleteUseCase}
-        onCancel={() => setDeleteTarget(null)}
-      />
-
-      {toast && (
-        <AdminToast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+      {filteredData.length > 0 ? (
+        <UseCaseTable data={filteredData} onDelete={handleDelete} />
+      ) : (
+        <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
+          <p className="text-base font-medium text-gray-500">
+            No data available at the moment
+          </p>
+        </div>
       )}
     </div>
   );

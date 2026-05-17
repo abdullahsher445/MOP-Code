@@ -1,10 +1,10 @@
-import pdfplumber
 import os
+import pdfplumber
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """
-    Extract text from a PDF file.
+    Extract text from a single PDF file.
     """
     all_text = []
 
@@ -20,13 +20,15 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 def extract_all_pdfs(input_folder: str) -> dict:
     """
     Extract text from all PDF files in a folder.
+
+    Returns:
+        dict: {filename: extracted_text}
     """
     extracted_documents = {}
 
     for filename in os.listdir(input_folder):
         if filename.lower().endswith(".pdf"):
             pdf_path = os.path.join(input_folder, filename)
-            text = extract_text_from_pdf(pdf_path)
-            extracted_documents[filename] = text
+            extracted_documents[filename] = extract_text_from_pdf(pdf_path)
 
     return extracted_documents

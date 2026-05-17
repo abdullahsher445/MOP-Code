@@ -1,4 +1,5 @@
 import re
+import pandas as pd
 
 TARGET_TERMS = [
     "planning scheme",
@@ -10,197 +11,48 @@ TARGET_TERMS = [
     "schedule"
 ]
 
-NOISE_PATTERNS = [
-    r"contents",
-    r"page\s*\|",
-    r"\.{3,}",
-]
 
-OTHER_TERMS = [
-    "planning scheme",
-    "zone",
-    "overlay",
-    "planning permit",
-    "responsible authority",
-    "planning authority",
-    "schedule"
-]
-
-
-def split_into_sentences(text: str) -> list:
-    text = re.sub(r"\s+", " ", text).strip()
-    sentences = re.split(r'(?<=[.!?])\s+', text)
-    return [s.strip() for s in sentences if s.strip()]
-
-
-def is_noise(sentence: str) -> bool:
-    s = sentence.lower().strip()
-
-    for pattern in NOISE_PATTERNS:
-        if re.search(pattern, s):
-            return True
-
-    if len(s) < 6:
-        return True
-
-    return False
-
-
-def clean_candidate(sentence: str) -> str:
-    sentence = re.sub(r"\s+", " ", sentence).strip()
-    sentence = re.sub(r"^[\d\.\-\s]+", "", sentence)
-    return sentence
-
-
-def is_heading_like(sentence: str, term: str) -> bool:
-    s = sentence.lower().strip()
-    return (
-        s == f"what is a {term}?"
-        or s == f"what is an {term}?"
-        or s.startswith(f"what is a {term}?")
-        or s.startswith(f"what is an {term}?")
-    )
-
-
-def contains_too_many_other_terms(text: str, current_term: str) -> bool:
-    text_lower = text.lower()
-    count = 0
-    for term in OTHER_TERMS:
-        if term != current_term and term in text_lower:
-            count += 1
-    return count >= 2
-
-
-def score_sentence(sentence: str, term: str) -> int:
-    s = sentence.lower()
-    score = 0
-
-    if term in s:
-        score += 3
-
-    if "what is" in s:
-        score += 2
-
-    if "is a" in s or "is an" in s or "means" in s:
-        score += 2
-
-    if "control" in s or "identify" in s or "purpose" in s or "additional" in s:
-        score += 1
-
-    if len(sentence) < 300:
-        score += 2
-    elif len(sentence) < 600:
-        score += 1
-
-    if is_noise(sentence):
-        score -= 3
-
-    return score
-
-
-def build_context(sentences: list, index: int, term: str) -> str:
-    current = clean_candidate(sentences[index])
-
-    if is_heading_like(current, term):
-        collected = [current]
-
-        for j in range(index + 1, min(len(sentences), index + 4)):
-            next_sent = clean_candidate(sentences[j])
-
-            if is_noise(next_sent):
-                continue
-
-            if next_sent.lower().startswith("what is "):
-                break
-
-            if contains_too_many_other_terms(next_sent, term):
-                break
-
-            collected.append(next_sent)
-
-            if len(" ".join(collected)) > 450:
-                break
-
-        return " ".join(collected)
-
-    start = max(0, index - 1)
-    end = min(len(sentences), index + 2)
-    context = " ".join(clean_candidate(sentences[j]) for j in range(start, end))
-    return context
-
-
-def find_best_definition(sentences: list, term: str) -> str:
-    candidates = []
-
-    for i, sentence in enumerate(sentences):
-        s = clean_candidate(sentence)
-
-        if term.lower() in s.lower() and not is_noise(s):
-            context = build_context(sentences, i, term)
-            candidates.append((score_sentence(context, term), context))
-
-    if not candidates:
-        return "Not specified"
-
-    candidates.sort(key=lambda x: (-x[0], len(x[1])))
-    return candidates[0][1]
-
-
-def infer_purpose(text: str, term: str) -> str:
-    t = text.lower()
+def infer_purpose(definition_text: str, term: str) -> str:
+    """
+    Infer purpose/function from definition text and term.
+    """
+    text = str(definition_text).lower()
 
     if term == "planning scheme":
-        if "control" in t or "land use" in t or "development" in t:
+        if "land use" in text or "development" in text or "control" in text:
             return "Controls land use and development."
     elif term == "zone":
-        if "identify" in t or "use" in t or "land" in t:
+        if "use" in text or "land" in text or "identify" in text:
             return "Designates land for particular uses."
     elif term == "overlay":
-        if "additional" in t or "specific" in t or "applies" in t:
+        if "additional" in text or "specific" in text or "control" in text:
             return "Applies additional controls for specific issues."
     elif term == "planning permit":
-        if "permit" in t or "approval" in t or "grant" in t:
+        if "permit" in text or "approval" in text or "grant" in text:
             return "Provides approval for a use or development."
     elif term == "responsible authority":
-        if "decide" in t or "application" in t or "administer" in t:
+        if "application" in text or "decision" in text or "administer" in text:
             return "Assesses or decides planning applications."
     elif term == "planning authority":
-        if "prepare" in t or "amend" in t or "scheme" in t:
+        if "prepare" in text or "amend" in text or "scheme" in text:
             return "Prepares or amends the planning scheme."
     elif term == "schedule":
-        if "local" in t or "objectives" in t or "requirements" in t:
+        if "local" in text or "requirements" in text or "objectives" in text:
             return "Adds detailed or local provisions to controls."
 
     return "Not specified"
 
 
-def infer_permit_info(text: str) -> str:
-    t = text.lower()
-    if "planning permit" in t:
-        return "Planning permit mentioned."
-    if "subject to a permit" in t or "subject to planning permit" in t:
-        return "Permit required or conditionally required."
-    if "without planning approval" in t:
-        return "May not require planning approval in some cases."
-    if "permit is required" in t:
-        return "Permit requirement identified."
-    return "Not specified"
-
-
-def infer_authority(text: str) -> str:
-    t = text.lower()
+def extract_authority_names(text: str) -> str:
+    """
+    Extract authority mentions from sentence text.
+    """
+    text_lower = str(text).lower()
     found = []
 
-    if "responsible authority" in t:
-        found.append("responsible authority")
-    if "planning authority" in t:
-        found.append("planning authority")
-    if "council" in t:
-        found.append("council")
-    if "minister" in t:
-        found.append("minister")
-    if "vcat" in t:
-        found.append("vcat")
+    for item in ["responsible authority", "planning authority", "council", "minister", "vcat"]:
+        if item in text_lower:
+            found.append(item)
 
     if found:
         return ", ".join(sorted(set(found)))
@@ -208,53 +60,147 @@ def infer_authority(text: str) -> str:
     return "Not specified"
 
 
-def infer_related_components(text: str) -> str:
-    t = text.lower()
-    comps = []
+def extract_related_components(text: str) -> str:
+    """
+    Extract related components from sentence text.
+    """
+    text_lower = str(text).lower()
+    found = []
 
-    for item in [
-        "zone",
-        "overlay",
-        "schedule",
-        "planning scheme",
-        "planning permit",
-        "vpp",
-        "council"
-    ]:
-        if item in t:
-            comps.append(item)
+    for item in ["zone", "overlay", "schedule", "planning scheme", "planning permit", "vpp"]:
+        if item in text_lower:
+            found.append(item)
 
-    if comps:
-        return ", ".join(sorted(set(comps)))
+    if found:
+        return ", ".join(sorted(set(found)))
 
     return "Not specified"
 
 
-def infer_source_section(text: str) -> str:
-    match = re.search(r'\b(\d+\.\d+(?:\.\d+)?)\b', text)
+def extract_source_section(text: str) -> str:
+    """
+    Extract section number if present.
+    """
+    match = re.search(r"\b(\d+\.\d+(?:\.\d+)?)\b", str(text))
     if match:
         return match.group(1)
+
     return "Not specified"
 
 
-def extract_knowledge(text: str, document_name: str) -> list:
-    sentences = split_into_sentences(text)
-    results = []
+def sentence_quality_score(sentence: str, term: str, label: str, confidence: float) -> float:
+    """
+    Score sentence quality so better candidates are preferred.
+    """
+    s = str(sentence).strip()
+    s_lower = s.lower()
+    score = float(confidence)
+
+    # Must contain the target term
+    if term not in s_lower:
+        return -999.0
+
+    # Prefer better definition-style sentences
+    if label == "definition":
+        if "what is" in s_lower:
+            score += 3
+        if " is a " in s_lower or " is an " in s_lower:
+            score += 3
+        if s_lower.startswith(term):
+            score += 2
+        if s_lower.startswith("a " + term) or s_lower.startswith("an " + term):
+            score += 2
+        if "statutory document" in s_lower:
+            score += 2
+        if "identifies land" in s_lower:
+            score += 2
+        if "applies additional controls" in s_lower:
+            score += 2
+        if "describes the requirements that apply" in s_lower:
+            score += 2
+
+    # Penalise obvious noise
+    bad_starts = ["chapter", "page |", "figure", "table", "objector"]
+    if any(s_lower.startswith(x) for x in bad_starts):
+        score -= 4
+
+    if "page |" in s_lower:
+        score -= 4
+    if "figure" in s_lower:
+        score -= 3
+    if len(s) > 700:
+        score -= 2
+    if len(s) < 20:
+        score -= 2
+
+    return score
+
+
+def pick_best_sentence(df: pd.DataFrame, label: str, term: str) -> str:
+    """
+    Select the best sentence for a given label and term.
+    """
+    subset = df[
+        (df["predicted_label"] == label)
+        & (df["sentence"].str.lower().str.contains(term, na=False))
+    ].copy()
+
+    if subset.empty:
+        return "Not specified"
+
+    subset["custom_score"] = subset.apply(
+        lambda row: sentence_quality_score(
+            row["sentence"],
+            term,
+            label,
+            row["confidence"]
+        ),
+        axis=1
+    )
+
+    subset = subset.sort_values(by="custom_score", ascending=False)
+    best = subset.iloc[0]["sentence"]
+
+    if pd.isna(best):
+        return "Not specified"
+
+    return best
+
+
+def build_structured_records(prediction_df: pd.DataFrame, document_name: str) -> list[dict]:
+    """
+    Convert predicted sentence labels into structured records for each target term.
+    """
+    records = []
 
     for term in TARGET_TERMS:
-        definition = find_best_definition(sentences, term)
+        definition = pick_best_sentence(prediction_df, "definition", term)
+        permit_info = pick_best_sentence(prediction_df, "permit_related", term)
+        authority_sentence = pick_best_sentence(prediction_df, "authority", term)
+        component_sentence = pick_best_sentence(prediction_df, "component", term)
+
+        combined_text = " ".join([
+            definition if definition != "Not specified" else "",
+            permit_info if permit_info != "Not specified" else "",
+            authority_sentence if authority_sentence != "Not specified" else "",
+            component_sentence if component_sentence != "Not specified" else ""
+        ]).strip()
 
         record = {
             "document_name": document_name,
             "term": term,
             "definition": definition,
             "purpose_or_function": infer_purpose(definition, term),
-            "permit_related_information": infer_permit_info(definition),
-            "authority_involved": infer_authority(definition),
-            "related_components": infer_related_components(definition),
-            "source_section": infer_source_section(definition)
+            "permit_related_information": permit_info,
+            "authority_involved": extract_authority_names(
+                authority_sentence if authority_sentence != "Not specified" else combined_text
+            ),
+            "related_components": extract_related_components(
+                component_sentence if component_sentence != "Not specified" else combined_text
+            ),
+            "source_section": extract_source_section(combined_text)
         }
 
-        results.append(record)
+        records.append(record)
 
-    return results
+    return records

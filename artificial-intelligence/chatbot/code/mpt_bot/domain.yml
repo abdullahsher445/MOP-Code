@@ -42,6 +42,14 @@ intents:
   - ask_tram_route_with_transfers
   - ask_traffic
   - ask_traffic_location
+  #Awanish intents (End) -------------------------------------------
+  - suggest_park_and_ride
+  - find_accessible_route
+  - live_departures
+  - get_directions
+  - ask_direct_tram_route
+  - ask_user_about_location_for_traffic
+  - ask_accessible_route
   - get_directions
   - find_parking_near_station
   - ask_direct_tram_route
@@ -218,6 +226,9 @@ responses:
   - text: "For which loaction you want to know the traffic status?"
   utter_traffic_details:
     - text: "Traffic is {traffic_status} from {source} to {destination} with a current speed of {current_speed} km/h. Estimated travel time is {travel_time} minutes for a distance of {distance} km."
+ #Awanish responses (end) -------------------------------------------
+  utter_no_accessible_route:
+    - text: "Sorry, I couldn’t find an accessible route with lifts for that journey."
 #rathanak response
   utter_ask_station_for_parking:
     - text: "Which station are you looking for parking near?"
@@ -258,6 +269,11 @@ actions:
   - action_find_tram_route_with_transfers
   - action_fetch_traffic
   - action_fetch_traffic_location
+  #Awanish actions (end) -------------------------------------------
+  - action_suggest_park_and_ride
+  - action_find_accessible_route
+  - action_live_departures
+  - action_suggest_park_and_ride_enhanced
  #rathanak action--------
   - action_find_parking_near_station
   - action_check_direct_tram

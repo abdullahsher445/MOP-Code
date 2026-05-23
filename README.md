@@ -1,164 +1,305 @@
-#  Chameleon Company - Melbourne Open Data Playground Code repository
-This is a public repository designed for the Chameleon-City of Melbourne Open Data project team to manage their codebase and artifacts for development and deployment of the Melbourne Open Data Playground and associated Public GitHub Repository(MOP).
+# Melbourne Open Playground (MOP)
 
-**Note: This repository is Private and contains the code base for the web application and any associated collatoral for our project.**
+A Next.js web application that showcases Melbourne's open data, datasets, case studies, and interactive content. It includes a fully featured public site with multilingual support and a role-based admin dashboard for content management.
 
-## Sub-folders
+---
 
-**Only publish content to this repository to the folders managed by your team!**
+## Table of Contents
 
-### Data Science team folders 
-For the Data Science team you should only publish to the following folders:
-- *Playground*  - create your named folder in here for private WIP content
-- *datascience* - content you wish to share or collaborate on with the webapp team or others in the datascience team
-- *public_github/MOP* - Staging and testing content before being published to the MOP repository.
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Running Tests](#running-tests)
+- [Docker](#docker)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [API Overview](#api-overview)
+- [Git Contributions](#git-contributions)
 
-### Web Development Team Folders 
-Similarly, the Web Development team should only publish to the following folders:
-- *faq*  - contains all the queries created for the FAQs folder.
-- *google_cloud_test* - Under this folder, contains the instance of the web application in the form of an image.
-- *webapp* - This is the web application itself, an executable instance for the team project.
+---
 
-### Previous Folders
-Please note that the folders can be overlooked as these all the previous contributions:
-- *ETL* - This is the server that consists of our parking sensors’ recorded data. They are recorded daily.
-- *prior_work* - These consist of all of the progress made by the previous trimesters (by all the Teams).
-  
-## Setting up the Repository:
+## Tech Stack
 
-**Please follow these instructions to set up your environment. This is especially useful for all Junior Students!**
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 15 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Primary Database | PostgreSQL via Supabase |
+| Secondary Database | MongoDB (legacy use cases) |
+| Auth | JWT + bcryptjs |
+| Storage / Realtime | Firebase |
+| Error Tracking | Sentry |
+| Testing | Jest + Cypress |
+| i18n | next-intl (8 languages) |
+| CI/CD | Jenkins + Google Cloud (Build → Artifact Registry → Cloud Run) |
 
-### Pre-Requisites:
-Please also make sure you have these tools downloaded on your desktop:
-- [Microsoft VS Code (Word Editor)](https://code.visualstudio.com/Download)
-- [GitHub Desktop (An alternative for handling GitHub CLI) ](https://desktop.github.com/)
-- [Miniconda3 (Environment Path for the WebApp)](https://docs.conda.io/en/latest/miniconda.html)
+---
 
-**NOTE:** Please install only the setup files for the first two applications only. Then make sure to install MiniConda3 while proceeding to Step 4. 
+## Getting Started
 
-### Step 1: Clone the Repository:
-Once we have downloaded the pre-requisites for the web application, proceed to copy the link via the GitHub Desktop option, as shown in the picture link below: 
+### Prerequisites
 
-<a href="https://drive.google.com/file/d/1LinRBm13b1x7AGfAIMEjejavz6SH0SSJ/view?usp=sharing">Step 1a</a>
+- Node.js 18+
+- npm 9+
+- A PostgreSQL database (Supabase recommended)
 
-You should get your GitHub Desktop opened and would click on ‘Clone’ after you proceed to direct your repository to the place where you wish to save it. It is better to save all the repositories under the “GitHub” folder, which will be under your “Documents” folder.
-
-<a href="https://drive.google.com/file/d/1XR_bUQHsqNIFjQULohcI9N8spTGbxvr_/view?usp=sharing">Step 1b</a>
-
-### Step 2: Link the repository with your VS Code
-After cloning the repository, type in “VSCode” on your Desktop’s search bar.
-
-<a href="https://drive.google.com/file/d/19fyVrszUfjkBryORR8WW9cBHQoK-SepO/view?usp=sharing">Step 2a</a>
-
-Open your VSCode and on the top left, you should be able to see the explorer folder, as shown by the yellow arrow in the following picture. This is how you will be able to open up a new folder.
-
-<a href="https://drive.google.com/file/d/1TNEcRiL627QD_Ha8euEop0t0E6zvsaaH/view?usp=sharing">Step 2b</a>
-
-Now proceed to Documents > GitHub > MOP-Code. Select the “webapp” folder and click on “Select Folder”.
-
-<a href="https://drive.google.com/file/d/17Dd-iGftFM0Jaf_kg6nZgTDUOVCv2ETW/view?usp=sharing">Step 2c</a>
-
-### Step 3: Add the Extensions
-Now add the extensions from VSCode as well. Note that you have a “Extensions” Tab on the left side as shown in the picture below:
-
-<a href="https://drive.google.com/file/d/17Yd1Pr0X69iH4FMpV8eOsco6oHDXSZnI/view?usp=sharing">Step 3</a>
-
-Now add the following extensions by simply typing in:
--	GitHub
--	Docker
--	Python
-Finally, install these extensions!
-
-### Step 4: Installing Miniconda3
-Install Miniconda3 using this [link](https://docs.conda.io/en/latest/miniconda.html)
-
-**NOTE:** While installing your environment on your machine, please always make sure to check the first box when you reach this stage of pre-installation. Otherwise, you will have to set the environment as shown here; see Troubleshooting – Scenario 1.
-
-**ONCE AGAIN, MAKE SURE TO TICK “ADD MINICONDA3 TO MY ENVIRONMENT VARIABLE” (DEFAULT IS UNTICKED):**
-
-<a href="https://drive.google.com/file/d/1LqfHVBcMHsMzfq1sjuSacybwtCk8OG3p/view?usp=sharing)">Step 4</a>
-
-### Step 5: Create the Environment
-Now that we have our web application linked to VSCode, note that there is an “environment.yml” file. This is essentially a kind of file used for the web application’s configuration. This directly implies that it will set and install all the dependencies needed for it. To create our environment, please copy and execute this terminal command:
+### Installation
 
 ```bash
-conda env create --file dev_environment.yml
+# 1. Clone the repository
+git clone <repo-url>
+cd next_webapp
+
+# 2. Install dependencies
+npm install
+
+# 3. Set up environment variables (see section below)
+cp .env.example .env.local
+
+# 4. Start the development server
+npm run dev
 ```
 
-### Step 6: Select Miniconda3 Environment from the List of Environment
-From Step 3, you have only added a new environment for your webapp. However, this path hasn’t been linked yet. Now to ensure to check your miniconda3 environment, first execute this command:
+The app runs at [http://localhost:3000](http://localhost:3000) by default.
+
+### Build for Production
 
 ```bash
-conda env list
+npm run build
+npm start
 ```
 
-Under this command, you should be able to see your list of environments. We need to set our environment, which will exist under “melbourne_open_playground”. Please copy and execute this command in the terminal:
+---
+
+## Environment Variables
+
+Create a `.env.local` file in the project root. The required variables are:
+
+```env
+# PostgreSQL / Supabase
+SUPABASE_URL=
+SUPABASE_API_KEY=
+DATABASE_URL=postgresql://user:password@host:port/dbname
+POSTGRES_HOST=
+POSTGRES_PORT=
+POSTGRES_DB=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+
+# MongoDB (legacy use cases)
+MONGODB_URI=mongodb+srv://...
+
+# Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+
+# JWT
+JWT_SECRET=
+
+# Email (Nodemailer / SMTP)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
+
+# Error Tracking
+SENTRY_DSN=
+NEXT_PUBLIC_SENTRY_DSN=
+```
+
+---
+
+## Running Tests
 
 ```bash
-conda activate melbourne_playground_webapp
+# Unit and integration tests (Jest)
+npm test
+
+# Lint
+npm run lint
+
+# End-to-end tests (Cypress) — requires the dev server to be running
+npx cypress open
 ```
 
-### Step 7: Run the WebApp
-Finally, you will run the web application by clicking on the “Run without Debugging” Option, which is under the “Run” Tab. You will get see your application running and should give a message like:
+---
 
-<a href="https://drive.google.com/file/d/1Xw74LJ4ZyywxBmFxeJ6ssFdqVDt-yyiD/view?usp=sharing">Step 7a</a>
+## Docker
 
-Now just click on the website link mentioned on the terminal. This will lead you to the web application, running as shown here. Now you are all ready to develop this web application!
+```bash
+# Build the image
+docker build -t mop-app .
 
-<a href="https://drive.google.com/file/d/16my1X_XI_Y9URfFhWgaoC5lLAq2-pOBG/view?usp=sharing">Step 7b</a>
+# Run the container
+docker run -p 3000:3000 --env-file .env.local mop-app
+```
 
-## Troubleshooting Corner
+---
 
-**The following sub-headings might address some of the issues our web development has experienced during the upskilling phase of our team project. So here are some of the possible fixes you need to know:**
+## Features
 
-### Scenario 1: Setup environment variables for windows 
-Please follow these steps, in case you are having trouble with your environment path: 
-- Right-Click on My Computer
-- Click on Advanced System Settings
-- Click on Environment Variables or you can simply search for environment variables as follows
+### Public Site
 
-<a href="https://drive.google.com/file/d/1ZGOP6QIJEbP7gxQxCTqBP6FrL4L1BlGy/view?usp=sharing">Scenario 1a</a>
+| Feature | Description |
+|---|---|
+| **Home** | Landing page with featured content and data highlights |
+| **Categories** | Browse and filter Melbourne open datasets by category |
+| **Use Cases** | Case studies showing how open data is applied in practice |
+| **Blog** | Articles and announcements with rich-text content |
+| **Gallery** | Image gallery with lightbox and server-side pagination |
+| **Search** | Full-text search with category filters, sort options, and pagination |
+| **Statistics** | Charts and visualisations of dataset metrics by category and trimester |
+| **EV Infrastructure** | Information on Melbourne's EV charging network |
+| **Cafes & Restaurants** | Directory page for cafes and restaurants |
+| **Contact / FAQ** | Contact form submission and frequently asked questions |
+| **Chatbot** | AI-powered chatbot for user assistance |
 
-- Then, under System Variables, look for the path variable and click edit
+### Internationalisation
 
-<a href="https://drive.google.com/file/d/1jja4Fv45e-Tde8u3iAeQicwpQPWf2Bdk/view?usp=sharing">Scenario 1b</a>
+Eight supported languages with locale-prefixed routes:
 
-- Add the paths as shown in the below picture. This has four paths added as shown:
+| Code | Language |
+|---|---|
+| `en` | English (default) |
+| `cn` | Chinese |
+| `es` | Spanish |
+| `el` | Greek |
+| `ar` | Arabic |
+| `it` | Italian |
+| `hi` | Hindi |
+| `vi` | Vietnamese |
 
-<a href="https://drive.google.com/file/d/1r5oXS_DHMLr0L-Ltx2JOm_5BQJWDuw6c/view?usp=sharing">Scenario 1c</a>
+Translation files are located in `messages/[locale].json`.
 
-### Scenario 2: Use-Case Templates not appearing in the Development environment – (Registry Fix)
-In case your templates are not showing as shown in the picture from the last step of the set up procedures, please head on to the “Registry Editor”.
+### Authentication
 
-<a href="https://drive.google.com/file/d/15R-UgQwCS54bC-K_ooBt-f_rpIab9CBk/view?usp=sharing">Scenario 2a</a>
+- Email/password registration and login
+- JWT sessions with 7-day expiry (stored in localStorage)
+- OTP verification for new accounts
+- Password reset via email
+- Role-based access control — roles: `admin`, `editor`, `viewer`
 
-On the left hand of the Registry Editor, look for the “HKEY_CLASSES_ROOT”. From there, proceed to the ‘.js’ folder and then select the ‘Content Type’ file. The content type would initially be as “text/plain” but please set this as “text/javascript”. 
+### Admin Dashboard
 
-<a href="https://drive.google.com/file/d/1K6KM0-23PUIL4AQgcib8vcbbpng5x4oW/view?usp=sharing">Scenario 2b</a>
+| Feature | Description |
+|---|---|
+| **Dashboard** | Overview with live statistics widget and recent activity feed |
+| **Blog Management** | Create, edit, and delete blog posts using CKEditor rich-text editor |
+| **Category Management** | Add, update, and remove content categories |
+| **Use Case Management** | Manage case studies with tags and metadata |
+| **Gallery Management** | Upload, organise, and delete gallery images |
+| **Activity History** | Sortable, filterable, exportable audit log of all admin actions with configurable retention |
+| **Settings** | Admin configuration and preferences |
 
-<a href="https://drive.google.com/file/d/1jauw9tgivgZhHPeXBL-Vb4wJbU8xH50j/view?usp=sharing">Scenario 2c</a>
+### User Profile
 
-<a href="https://drive.google.com/file/d/1CNXXFsfSxenF_CqxnKCOn3ZZpac1gO6M/view?usp=sharing">Scenario 2d</a>
+- View and update personal details
+- Upload a profile picture
+- Change account password
 
+---
 
-Now, similar will also be done under the “HKEY_LOCAL_MACHINE” folder. Please repeat the above steps:
+## Project Structure
 
-<a href="https://drive.google.com/file/d/1dnBnmaSVoc9lZtNCqCuS4b9rkr8zoyyh/view?usp=sharing">Scenario 2e</a>
+```
+next_webapp/
+├── src/
+│   ├── app/
+│   │   ├── [locale]/              # All locale-prefixed pages
+│   │   │   ├── admin/             # Admin dashboard pages
+│   │   │   ├── blog/              # Blog list and detail
+│   │   │   ├── categories/        # Category pages
+│   │   │   ├── usecases/          # Use case pages
+│   │   │   ├── search/            # Search page
+│   │   │   ├── statistics/        # Statistics and charts
+│   │   │   ├── gallery/           # Gallery page
+│   │   │   ├── login/             # Auth pages (login, signup, forgot-password)
+│   │   │   └── profile/           # User profile
+│   │   └── api/                   # REST API routes
+│   ├── components/                # Reusable React components
+│   ├── hooks/                     # Custom React hooks
+│   ├── library/                   # Supabase and DB clients
+│   ├── models/                    # TypeScript interfaces and types
+│   ├── mongodb/                   # MongoDB schemas
+│   ├── utils/                     # Logger, helpers, data utilities
+│   └── middleware.ts              # JWT auth and route protection
+├── messages/                      # i18n translation JSON files
+├── public/                        # Static assets (images, icons)
+├── sql/                           # PostgreSQL migration scripts
+├── cypress/                       # Cypress E2E test configuration
+├── Dockerfile
+├── Jenkinsfile
+└── next.config.mjs
+```
 
-### Scenario 3: Conda Environment Activation not working in PowerShell
-Please proceed to this link in case your environment is not working on [Conda Environment Activation.](https://github.com/conda/conda/issues/8428)
+---
 
+## API Overview
 
+All protected routes require a valid JWT in the `Authorization: Bearer <token>` header.
 
+| Route | Method | Auth | Description |
+|---|---|---|---|
+| `/api/auth/login` | POST | Public | Log in and receive a JWT |
+| `/api/auth/signup` | POST | Public | Register a new user |
+| `/api/auth/logout` | POST | Protected | Invalidate session |
+| `/api/auth/forgot-password` | POST | Public | Request a password reset email |
+| `/api/auth/reset-password` | POST | Public | Reset password with token |
+| `/api/home/blogs` | GET | Public | Featured blogs for homepage |
+| `/api/home/categories` | GET | Public | Categories for homepage |
+| `/api/home/gallery` | GET | Public | Featured gallery items |
+| `/api/blogs` | GET / POST | Protected | List or create blogs |
+| `/api/blogs/[id]` | GET / PUT / DELETE | Protected | Blog CRUD |
+| `/api/categories` | GET / POST | Protected | List or create categories |
+| `/api/categories/[id]` | GET / PUT / DELETE | Protected | Category CRUD |
+| `/api/usecases` | GET / POST | Public | List or create use cases |
+| `/api/usecases/[id]` | GET / PUT / DELETE | Public | Use case CRUD |
+| `/api/gallery` | GET / POST | Protected | List or upload gallery items |
+| `/api/gallery/[id]` | GET / PUT / DELETE | Protected | Gallery item CRUD |
+| `/api/search` | GET | Public | Full-text search (`?q=&category=&page=&sortBy=`) |
+| `/api/statistics/*` | GET | Public | Dataset statistics (count, by-category, trimester, tags) |
+| `/api/profile` | GET / PUT | Protected | View or update user profile |
+| `/api/profile/upload-image` | POST | Protected | Upload profile picture |
+| `/api/admin/activity-history` | GET | Admin | Admin audit log |
+| `/api/contact` | POST | Public | Contact form submission |
+| `/api/chat` | POST | Public | Chatbot endpoint |
+| `/api/logs` | GET / DELETE | Admin | Application logs |
 
-## License
+---
 
-This is the license we have for our Repository
+## Git Contributions
 
-[MIT](https://choosealicense.com/licenses/mit/)
+### Branching
 
+Branch from the branch you intend to merge back into. Use your username with a team indicator:
 
-## Authors
+```
+Username_WD   or   Username-webdev
+```
 
-[Muhammad Sohaib bin Kashif (T1 2022)](https://github.com/M-S-Kashif)
+Always fetch the latest changes before pushing to avoid merge conflicts.
 
+### Commit Message Tags
+
+| Tag | Description |
+|---|---|
+| `feat` | New feature |
+| `fix` | Bug fix or hotfix |
+| `docs` | Documentation changes |
+| `design` | Style or UI changes |
+| `refactor` | Code refactoring |
+| `test` | New or updated tests |
+| `build` | Build process changes |
+
+### Pull Requests
+
+- Write a clear, specific PR title and description.
+- If you collaborated on the branch, mention co-contributors in the PR body.
+- Link any related issues.
